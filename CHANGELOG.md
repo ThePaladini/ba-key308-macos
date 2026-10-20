@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.0 — 2026-10-20
+
+**New**
+- **Bluetooth batteries.** A new menu section shows the battery of every connected Bluetooth device
+  (mice, headphones, AirPods with each earbud and the case, controllers), any brand. Pin a device to show
+  its level next to the menu bar icon; mice are pinned automatically. Reads what macOS already collects
+  (`system_profiler`), with no extra permission. See [docs/BATTERIES.md](docs/BATTERIES.md).
+
+
 ## 1.1.1 — 2026-10-20
 
 **Fixed**

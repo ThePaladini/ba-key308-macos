@@ -212,3 +212,43 @@ final class KeyboardModelTests: XCTestCase {
         XCTAssertEqual(KeyLayout.frame(from: [78: RGB(1, 2, 3)])[4][1], RGB(1, 2, 3), "wide ANSI Left Shift fills both cells")
     }
 }
+
+final class BluetoothBatteryTests: XCTestCase {
+    /// Shape of real `system_profiler SPBluetoothDataType -json` output (2026-10-20, macOS 26),
+    /// addresses replaced. The mouse and AirPods entries follow the same format.
+    static let json = #"""
+    {"SPBluetoothDataType": [{
+      "device_connected": [
+        {"BA-KEY308": {"device_address": "AA:BB:CC:00:00:01", "device_batteryLevelMain": "100%",
+                       "device_minorType": "Keyboard", "device_vendorID": "0x260D", "device_productID": "0x0130"}},
+        {"IMICE GW-X7 5.1": {"device_address": "AA:BB:CC:00:00:02", "device_batteryLevelMain": "62%",
+                             "device_minorType": "Mouse"}},
+        {"AirPods Pro": {"device_address": "AA:BB:CC:00:00:03", "device_minorType": "Headphones",
+                         "device_batteryLevelLeft": "80%", "device_batteryLevelRight": "75%", "device_batteryLevelCase": "40%"}},
+        {"Speaker": {"device_address": "AA:BB:CC:00:00:04", "device_minorType": "Speaker"}}
+      ],
+      "device_not_connected": [
+        {"Old Mouse": {"device_address": "AA:BB:CC:00:00:05", "device_minorType": "Mouse", "device_batteryLevelMain": "10%"}}
+      ]
+    }]}
+    """#
+
+    func testParsesConnectedDevicesWithBattery() {
+        let list = BluetoothBatteryDevice.parse(Data(Self.json.utf8))
+        XCTAssertEqual(list.map(\.name), ["IMICE GW-X7 5.1", "AirPods Pro", "BA-KEY308"], "mice first, no-battery and disconnected devices skipped")
+        let mouse = list[0]
+        XCTAssertTrue(mouse.isMouse)
+        XCTAssertEqual(mouse.primary, 62)
+        XCTAssertEqual(mouse.symbol, "computermouse")
+        let pods = list[1]
+        XCTAssertEqual(pods.levels.map(\.label), ["L", "R", "Case"])
+        XCTAssertEqual(pods.primary, 75, "lower earbud when there is no main battery; the case doesn't count")
+        XCTAssertEqual(list[2].symbol, "keyboard")
+        XCTAssertTrue(list[2].isDareuKeyboard, "VID 0x260D: shown by the app itself, not in the Bluetooth list")
+        XCTAssertFalse(mouse.isDareuKeyboard)
+    }
+
+    func testGarbageIsEmpty() {
+        XCTAssertTrue(BluetoothBatteryDevice.parse(Data("not json".utf8)).isEmpty)
+    }
+}

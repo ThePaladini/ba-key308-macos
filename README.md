@@ -68,6 +68,8 @@ The `bakey info` command used for it is read-only.
     - **Raindrop on key press**: ripples spread from the key you press.
     - Random Rain, Wave and Breathing.
   - **Side light**: off / static / breathing, color, brightness.
+  - **Bluetooth batteries**: the battery of your mouse, headphones or any other Bluetooth device, with a
+    pin to show it next to the menu bar icon ([docs/BATTERIES.md](docs/BATTERIES.md)).
   - Launch at login.
 - **Key Painter**: click or drag to color individual keys. Includes an eyedropper, fill, built-in
   layouts (WASD, arrows, rainbow…) and saved layouts. Colors are re-sent when the keyboard reconnects.
@@ -179,6 +181,7 @@ other models are welcome.
 | [BLUETOOTH.md](docs/BLUETOOTH.md) | Why Bluetooth is slow for lighting, the experiments, the row-diffing workaround |
 | [SOFT-EFFECTS.md](docs/SOFT-EFFECTS.md) | Mac-rendered effects, the native Raindrop speed investigation, adding an effect |
 | [DAREU-CATALOG.md](docs/DAREU-CATALOG.md) | Every product in Dareu's public catalog: platform, firmware type, and what that means for compatibility |
+| [BATTERIES.md](docs/BATTERIES.md) | How the Bluetooth battery levels are read, and their limits |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Code organization and design decisions |
 | [SAFETY.md](docs/SAFETY.md) | Commands that can brick the keyboard, and how this project prevents them |
 | [REVERSE-ENGINEERING.md](docs/REVERSE-ENGINEERING.md) | Step-by-step log of how the protocol was recovered |

@@ -82,7 +82,7 @@ final class KeyboardStore: ObservableObject {
             ?? Presets.wasd
         livePreview = defaults.object(forKey: Keys.live) as? Bool ?? true
         restoreFrameOnConnect = defaults.object(forKey: Keys.restore) as? Bool ?? true
-        showBatteryInMenuBar = defaults.object(forKey: Keys.battery) as? Bool ?? false
+        showBatteryInMenuBar = defaults.object(forKey: Keys.battery) as? Bool ?? true
         softEffect = SoftEffect(rawValue: defaults.integer(forKey: Keys.softEffect))
         softSpeed = defaults.object(forKey: Keys.softSpeed) as? Double ?? 0.5
         softColor = defaults.string(forKey: Keys.softColor).flatMap(RGB.init(hex:))

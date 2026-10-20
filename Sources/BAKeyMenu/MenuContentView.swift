@@ -34,6 +34,9 @@ struct MenuContentView: View {
                 ConnectionHelp()
             }
 
+            Divider()
+            BluetoothBatteriesSection()
+
             if let error = store.lastError {
                 Text(error)
                     .font(.caption)
@@ -344,7 +347,8 @@ private struct FooterView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Toggle("Battery in menu bar", isOn: $store.showBatteryInMenuBar)
+            Toggle("Battery levels in menu bar", isOn: $store.showBatteryInMenuBar)
+                .help("Keyboard, plus any Bluetooth device pinned below (e.g. the mouse)")
             Toggle("Launch at login", isOn: Binding(get: { store.launchAtLogin }, set: { store.launchAtLogin = $0 }))
             HStack {
                 Button("Refresh") { store.refresh() }

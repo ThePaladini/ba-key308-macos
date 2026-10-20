@@ -66,6 +66,8 @@ O comando `bakey info` usado no relato só lê, não altera nada.
     - **Gota de chuva ao apertar uma tecla**: uma onda se espalha a partir da tecla que você aperta.
     - Chuva aleatória, Onda e Respiração.
   - **Luz lateral**: desligada, fixa ou respiração, com cor e brilho.
+  - **Baterias Bluetooth**: a bateria do mouse, dos fones ou de qualquer aparelho Bluetooth, com um
+    alfinete para mostrar ao lado do ícone na barra de menus.
   - Abrir ao iniciar sessão.
 - **Pintor de teclas**: clique ou arraste para colorir cada tecla. Tem conta-gotas, preenchimento,
   layouts prontos (WASD, setas, arco-íris…) e layouts salvos. As cores são reenviadas quando o teclado
