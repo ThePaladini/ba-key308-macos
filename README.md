@@ -118,7 +118,7 @@ bakey listen [seconds]              Show key presses as the app sees them
 bakey lab sustained|async|partial|fill   Bluetooth experiments
 bakey bench                         Link latency / frame rate
 bakey demo [seconds]                Mac-driven rainbow animation
-bakey showcase [countdown]          ~35 s timed light show for filming
+bakey showcase [countdown]          ~40 s timed light show for filming (adapts to Bluetooth/USB)
 -v                                  Print every packet
 ```
 
