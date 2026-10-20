@@ -1,0 +1,92 @@
+# Key IDs and LED matrix
+
+The keyboard uses two independent numbering schemes:
+
+- **Key IDs** (1–172) identify physical keys in key-remapping commands (class 1).
+- **LED matrix cells** (row 0–5, column 0–14) address LEDs in per-key frames (class 3, command `0x04`).
+
+The source of truth in code is `Sources/BAKeyCore/KeyLayout.swift`. Run `bakey layout` to print it.
+
+## The calibrated LED matrix
+
+The Windows app has its own matrix table (`_matrixIds` in `TK51G_0130.cs`), but **that table is
+wrong for this keyboard**. It looks like an ANSI table:
+
+- the ABNT2 keys `\` (next to Left Shift) and `/` (next to Right Shift) are missing;
+- Right Shift and ↑ are two columns too far left;
+- `]` is in row 2 instead of row 3.
+
+The Windows app never sends per-key frames, so the mistake has no effect there. The map below was
+measured on the real keyboard on 2026-10-19. We lit chosen cells in distinct colors and photographed the
+result. Cells marked `·` have no LED.
+
+```
+        c0     c1   c2   c3   c4   c5   c6   c7   c8   c9   c10   c11   c12   c13    c14
+row 0   Esc    F1   F2   F3   F4   F5   F6   F7   F8   F9   F10   F11   F12   ·      ·
+row 1   '      1    2    3    4    5    6    7    8    9    0     -     =     Bksp   PgUp
+row 2   Tab    Q    W    E    R    T    Y    U    I    O    P     ´     [     Enter  Del
+row 3   Caps   A    S    D    F    G    H    J    K    L    Ç     ~     ·     ]      PgDn
+row 4   LShift \    Z    X    C    V    B    N    M    ,    .     ;     /     RShift ↑
+row 5   LCtrl  Win  Alt  Spc  Spc  Spc  Spc  Spc  Spc  AltGr Fn   RCtrl ←     ↓      →
+```
+
+How each part was confirmed:
+
+| Cell(s) | Key | Evidence |
+|---|---|---|
+| r2 c2, r3 c1–3 | W A S D | First test: WASD red on a blue board ✅ |
+| r4 c13 | Right Shift | Photo 1 (red) ✅ |
+| r4 c14 | ↑ | Photo 1 (green) ✅ |
+| r2 c13 | Enter | Photo 1 (blue) ✅ |
+| r3 c11 | `~` | Photo 1 (yellow) ✅ |
+| r0 c13, r0 c14 | none (knob area) | Photo 1: magenta and cyan not visible ✅ |
+| r3 c13 | `]` | Photo 2 (green) ✅ |
+| r3 c12 | none | Photo 2: red not visible ✅ |
+| r4 c1 | `\` | Photo 2 (blue) ✅ |
+| r4 c12 | `/` | Photo 2 (yellow) ✅ |
+| r5 c7 | Space LED | Photo 2 (cyan) ✅ |
+| r5 c3, r5 c5 | Space (assumed) | Photo 2: magenta and white not visible |
+| r5 c9 | AltGr | Photo 2 (orange) ✅ |
+| everything else | | Matches the Windows table and the physical order |
+
+The space bar probably has a single LED at r5 c7. The app paints all of r5 c3–c8 with the space color,
+so it works whichever cell is the real one.
+
+To recalibrate a different keyboard, use the CLI. For example, light one cell per color:
+
+```bash
+bakey keys "Shift=ff0000"         # by label (both Shift keys)
+bakey keys 91=ff0000 92=00ff00    # by key ID
+```
+
+Or write a small script that sends `PacketBuilder.framePackets` with chosen cells lit, then
+photograph the keyboard.
+
+## Key IDs
+
+| Key | ID | HID usage | | Key | ID | HID usage |
+|---|---|---|---|---|---|---|
+| Esc | 1 | 0x29 | | Caps | 60 | 0x39 |
+| F1–F12 | 2–13 | 0x3A–0x45 | | A–L | 61–69 | |
+| `'` | 17 | 0x35 | | Ç | 70 | 0x33 |
+| 1–0 | 18–27 | 0x1E–0x27 | | ~ | 71 | 0x34 |
+| - | 28 | 0x2D | | ] | 52 | 0x31 |
+| = | 29 | 0x2E | | PgDn | 55 | 0x4E |
+| Backspace | 31 | 0x2A | | LShift | 78 | 0xE1 |
+| PgUp | 34 | 0x4B | | `\` | 100 | 0x64 |
+| Tab | 39 | 0x2B | | Z–M | 80–86 | |
+| Q–P | 40–49 | | | , . ; | 87–89 | 0x36–0x38 |
+| ´ | 50 | 0x2F | | / | 135 | 0x87 |
+| [ | 51 | 0x30 | | RShift | 91 | 0xE5 |
+| Enter | 73 | 0x28 | | ↑ | 92 | 0x52 |
+| Del | 53 | 0x4C | | LCtrl / Win / Alt | 97 / 98 / 99 | 0xE0 / 0xE3 / 0xE2 |
+| Space | 102 | 0x2C | | AltGr / Fn / RCtrl | 106 / 107 / 109 | 0xE6 / 0xE7 / 0xE4 |
+| ← ↓ → | 110 / 111 / 112 | 0x50 / 0x51 / 0x4F | | Knob press (Mute) | 170 | n/a |
+
+The key labeled "Fn" sends HID usage 0xE7 (Right GUI) by default. The knob's rotation is reported as
+key IDs 171/172 (Vol+ / Vol−).
+
+## Coordinates
+
+Key rectangles in `KeyLayout.swift` come from the Windows app's drawing coordinates, with the origin moved
+to the top-left of Esc. One key unit is about 40 px. The app scales them to the painter window's width.
