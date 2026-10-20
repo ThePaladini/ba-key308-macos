@@ -36,14 +36,15 @@ struct SoftRenderer {
     private var ripples: [(center: CGPoint, born: Double, color: RGB)] = []
     private var rng = SystemRandomNumberGenerator()
 
-    private static let litKeys = KeyLayout.keys.filter { !$0.cells.isEmpty }
-    private static let width = KeyLayout.size.width
-    /// HID usage → key, for reactive effects.
-    static let keyForUsage: [Int: KeyDef] = {
+    // Layout of the connected model (taken when the renderer is created).
+    private let litKeys = KeyLayout.keys.filter { !$0.cells.isEmpty }
+    private let width = KeyLayout.size.width
+    /// HID usage → key of the connected model, for reactive effects.
+    static var keyForUsage: [Int: KeyDef] {
         var map: [Int: KeyDef] = [:]
-        for k in litKeys where map[k.hidUsage] == nil { map[k.hidUsage] = k }
+        for k in KeyLayout.keys where !k.cells.isEmpty && k.hidUsage != 0 && map[k.hidUsage] == nil { map[k.hidUsage] = k }
         return map
-    }()
+    }
 
     // Ripple tuning, in effect time (so the speed slider scales all of them).
     private static let rippleLife = 1.4      // s until a ripple has faded completely
@@ -78,7 +79,7 @@ struct SoftRenderer {
         case .ripple:
             // Each press: the key flashes, then a ring spreads outward and fades, like a drop in water.
             ripples.removeAll { time - $0.born >= Self.rippleLife }
-            for key in Self.litKeys {
+            for key in litKeys {
                 let p = CGPoint(x: key.rect.midX, y: key.rect.midY)
                 var best = RGB.black
                 for r in ripples {
@@ -100,7 +101,7 @@ struct SoftRenderer {
             var expected = 5.0 * step
             while expected > 0 {
                 if Double.random(in: 0..<1, using: &rng) < expected,
-                   let key = Self.litKeys.randomElement(using: &rng), drops[key.id] == nil {
+                   let key = litKeys.randomElement(using: &rng), drops[key.id] == nil {
                     drops[key.id] = (time, color ?? RGB(hue: Double.random(in: 0..<1, using: &rng)))
                 }
                 expected -= 1
@@ -114,8 +115,8 @@ struct SoftRenderer {
             }
 
         case .wave:
-            for key in Self.litKeys {
-                let x = key.rect.midX / Self.width
+            for key in litKeys {
+                let x = key.rect.midX / width
                 if let color {
                     let k = 0.5 + 0.5 * sin(2 * Double.pi * (x - time * 0.4))
                     colors[key.id] = color.scaled(k)
@@ -129,7 +130,7 @@ struct SoftRenderer {
             // One breath every 4 s at 1x; rainbow mode shifts hue each breath.
             let k = pow(0.5 - 0.5 * cos(2 * Double.pi * time / 4), 1.6)
             let c = color ?? RGB(hue: (time / 24).truncatingRemainder(dividingBy: 1))
-            for key in Self.litKeys { colors[key.id] = c.scaled(k) }
+            for key in litKeys { colors[key.id] = c.scaled(k) }
         }
         return KeyLayout.frame(from: colors)
     }

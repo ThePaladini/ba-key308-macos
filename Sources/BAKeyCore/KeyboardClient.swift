@@ -6,6 +6,8 @@ public struct DeviceInfo: Sendable, Equatable {
     public var viaReceiver: Bool
     public var firmware: String
     public var hardware: String
+    public var pid: Int = 0
+    public var modelName: String = ""
 }
 
 public struct BatteryState: Sendable, Equatable {
@@ -46,6 +48,10 @@ public final class KeyboardClient {
     public let hid: HIDDevice
     /// Target nibble for byte [1]: 0 = the device itself, (slot + 1) << 4 = keyboard behind the receiver.
     public private(set) var target: UInt8 = 0
+    /// PID of the keyboard being talked to (directly, or behind the receiver).
+    public private(set) var keyboardPID: Int
+    /// The keyboard model, which decides the key layout. nil for an unknown PID.
+    public var model: KeyboardModel? { KeyboardModel.forPID(keyboardPID) }
     public var log: ((String) -> Void)?
 
     /// SET commands this client is allowed to send. Everything else must be a GET.
@@ -59,6 +65,7 @@ public final class KeyboardClient {
 
     public init(hid: HIDDevice) throws {
         self.hid = hid
+        self.keyboardPID = hid.productID
         try hid.open()
         if hid.isReceiver {
             do { try selectKeyboardBehindReceiver() } catch { hid.close(); throw error }
@@ -126,8 +133,10 @@ public final class KeyboardClient {
         for i in 0..<n {
             let base = 8 + i * 3
             guard base + 2 < r.bytes.count else { break }
-            if r[base] != 0 && r.uint16(at: base + 1) == BAKey.keyboardPID {
+            let pid = Int(r.uint16(at: base + 1))
+            if r[base] != 0 && BAKey.keyboardPIDs.contains(pid) {
                 target = UInt8((i + 1) << 4)
+                keyboardPID = pid
                 return
             }
         }
@@ -141,8 +150,9 @@ public final class KeyboardClient {
             let r = try transact(.device, cmd, length: 2)
             return "\(r[7]).\(r[8]).\(r[9])"
         }
-        return DeviceInfo(name: hid.name, transport: hid.isReceiver ? "2.4G receiver" : hid.transport,
-                          viaReceiver: hid.isReceiver, firmware: try version(0x80), hardware: try version(0x81))
+        return DeviceInfo(name: model?.name ?? hid.name, transport: hid.isReceiver ? "2.4G receiver" : hid.transport,
+                          viaReceiver: hid.isReceiver, firmware: try version(0x80), hardware: try version(0x81),
+                          pid: keyboardPID, modelName: model?.name ?? "Unknown TK51G (PID \(String(format: "0x%04X", keyboardPID)))")
     }
 
     /// Win key lock and Mac mode, as toggled on the keyboard itself.

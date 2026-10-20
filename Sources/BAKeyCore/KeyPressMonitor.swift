@@ -40,7 +40,7 @@ public final class KeyPressMonitor: @unchecked Sendable {
 
     public init() {
         manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
-        let matches: [[String: Any]] = [BAKey.keyboardPID, BAKey.donglePID].map {
+        let matches: [[String: Any]] = (BAKey.keyboardPIDs + [BAKey.donglePID]).map {
             [kIOHIDVendorIDKey as String: BAKey.vendorID, kIOHIDProductIDKey as String: $0]
         }
         IOHIDManagerSetDeviceMatchingMultiple(manager, matches as CFArray)

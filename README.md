@@ -34,6 +34,29 @@ unless you choose a Mac-rendered effect.
 > allowlist (lighting and profiles); firmware-update and flash commands cannot be sent. See
 > [docs/SAFETY.md](docs/SAFETY.md). Use at your own risk.
 
+## Supported keyboards
+
+All of these are the same Dareu reference design, internally called **TK51G**, sold under different brands.
+
+| Keyboard | Layout | USB PID (VID `0x260D`) | Status |
+|---|---|---|---|
+| **Basike BA-KEY308** | ABNT2 | `0x0130` | ✅ tested (Bluetooth, USB); per-key LED map calibrated |
+| **Dareu EK75** | ANSI | `0x0101`, `0x0045` | 🧪 experimental: recognized, not tested yet; per-key LED map inferred |
+| **Husky Nomadic HTG200 / HTG500 / HTG800 V2** | ANSI | `0x0101` | 🧪 experimental (same hardware as the EK75) |
+| 2.4G receiver for the models above | n/a | `0x0042` | implemented, not tested yet |
+| Other Dareu keyboards with the same protocol (`FwType 0`): Z82 / Z82 PRO, A98, FK98, A87 PRO, EK87 PRO, A104, EK106 PRO, EK81 MAX, COOL 98, DK87 PRO, DK108 PRO, EK815 MAX, FLEX 75 | various | see [catalog](docs/DAREU-CATALOG.md) | ❔ probably work for effects; not recognized by the app yet; `bakey info` detects them, please report |
+| Newer EK75 revisions, CK75 PRO, Hall-effect "HE/RT" boards (`FwType` ≠ 0) | | | ❌ different protocol |
+
+The full list comes from Dareu's public web-driver catalog, scanned for this project:
+[docs/DAREU-CATALOG.md](docs/DAREU-CATALOG.md). How we know they're the same platform: Dareu's public web-driver catalog lists PIDs `0x0101` and
+`0x0045` as `"Model": "TK51G"`, and the Husky Nomadic is documented by
+[open-ek75](https://github.com/mateusands/open-ek75) as a rebadged EK75. Two independent Linux projects
+([open-ek75](https://github.com/mateusands/open-ek75),
+[Dareu-EK75-OpenRGB-Compat](https://github.com/KitsuneSemCalda/Dareu-EK75-OpenRGB-Compat)) speak the same
+protocol. **Own one of these, or another `0x260D` keyboard?** Please
+[send a compatibility report](https://github.com/ThePaladini/ba-key308-macos/issues/new?template=compatibility-report.yml).
+The `bakey info` command used for it is read-only.
+
 ## Features
 
 - **Menu bar panel**
@@ -155,6 +178,7 @@ other models are welcome.
 | [KEY-MATRIX.md](docs/KEY-MATRIX.md) | Key IDs and the calibrated per-key LED matrix |
 | [BLUETOOTH.md](docs/BLUETOOTH.md) | Why Bluetooth is slow for lighting, the experiments, the row-diffing workaround |
 | [SOFT-EFFECTS.md](docs/SOFT-EFFECTS.md) | Mac-rendered effects, the native Raindrop speed investigation, adding an effect |
+| [DAREU-CATALOG.md](docs/DAREU-CATALOG.md) | Every product in Dareu's public catalog: platform, firmware type, and what that means for compatibility |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Code organization and design decisions |
 | [SAFETY.md](docs/SAFETY.md) | Commands that can brick the keyboard, and how this project prevents them |
 | [REVERSE-ENGINEERING.md](docs/REVERSE-ENGINEERING.md) | Step-by-step log of how the protocol was recovered |
@@ -168,6 +192,7 @@ other models are welcome.
 | Bluetooth LE | ✅ tested |
 | USB cable | ✅ tested (about 130× faster than Bluetooth for lighting) |
 | 2.4G receiver | implemented from the Windows code, **not tested yet** |
+| Dareu EK75 / Husky Nomadic | recognized since v1.1.0, **not tested yet** |
 | Lighting effects, color, speed, brightness, side light | ✅ |
 | Per-key colors, Mac effects, key-press Raindrop | ✅ |
 | Battery, firmware info | ✅ |

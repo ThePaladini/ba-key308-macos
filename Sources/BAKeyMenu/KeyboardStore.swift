@@ -121,6 +121,8 @@ final class KeyboardStore: ObservableObject {
         status = .connecting
         do {
             info = try await worker.connect(to: candidates)
+            // The key layout (painter, presets, Mac effects) follows the connected model.
+            KeyLayout.current = info.flatMap { KeyboardModel.forPID($0.pid) } ?? .baKey308
             try await loadAll()
             status = .connected
             lastError = nil

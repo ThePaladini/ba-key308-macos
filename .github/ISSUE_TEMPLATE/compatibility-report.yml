@@ -1,0 +1,52 @@
+name: Compatibility report
+description: Tried BA-KEY Menu with a Dareu-based keyboard? Tell us what worked.
+title: "Compatibility: <brand and model>"
+labels: [compatibility]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks! Reports from real keyboards are how the supported-models list grows.
+        The commands below are **read-only**; they don't change anything on the keyboard.
+  - type: input
+    id: model
+    attributes:
+      label: Keyboard brand and model
+      placeholder: e.g. Dareu EK75, Husky Nomadic HTG500 V2
+    validations:
+      required: true
+  - type: dropdown
+    id: connection
+    attributes:
+      label: Connection used
+      options: [USB cable, Bluetooth, 2.4G receiver]
+    validations:
+      required: true
+  - type: textarea
+    id: ids
+    attributes:
+      label: USB IDs
+      description: |
+        Output of: `system_profiler SPUSBHostDataType SPBluetoothDataType | grep -B3 -A6 -i 0x260d`
+      render: text
+  - type: textarea
+    id: info
+    attributes:
+      label: Output of `bakey info`
+      description: From the `bakey` CLI in the release (or `swift run bakey info` from source).
+      render: text
+  - type: checkboxes
+    id: works
+    attributes:
+      label: What works?
+      options:
+        - label: The keyboard is detected (menu shows its name and battery)
+        - label: Keyboard effects, color, speed, brightness
+        - label: Side light
+        - label: Key Painter colors the right keys
+        - label: Mac effects / Raindrop on key press
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Anything that looked wrong. If Key Painter lights the wrong keys, which key lit up when you painted which?

@@ -82,11 +82,15 @@ public final class DeviceMonitor: @unchecked Sendable {
     /// Called on the main run loop whenever a matching device appears or disappears.
     public var onChange: (() -> Void)?
 
-    public init(scheduleOnMainRunLoop: Bool = true) {
+    /// - Parameter anyProduct: match every VID 0x260D device instead of only known models. Used by the
+    ///   CLI so owners of other Dareu-platform keyboards can run read-only `bakey info` for a report.
+    public init(scheduleOnMainRunLoop: Bool = true, anyProduct: Bool = false) {
         manager = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
-        let matches: [[String: Any]] = [BAKey.keyboardPID, BAKey.donglePID].map {
-            [kIOHIDVendorIDKey as String: BAKey.vendorID, kIOHIDProductIDKey as String: $0]
-        }
+        let matches: [[String: Any]] = anyProduct
+            ? [[kIOHIDVendorIDKey as String: BAKey.vendorID]]
+            : (BAKey.keyboardPIDs + [BAKey.donglePID]).map {
+                [kIOHIDVendorIDKey as String: BAKey.vendorID, kIOHIDProductIDKey as String: $0]
+            }
         IOHIDManagerSetDeviceMatchingMultiple(manager, matches as CFArray)
 
         guard scheduleOnMainRunLoop else { return }

@@ -16,8 +16,8 @@ enum Presets {
         return out
     }
 
-    static let wasd = highlight(["W", "A", "S", "D"], RGB(255, 0, 0), base: RGB(0, 40, 160))
-    static let arrows = highlight(["↑", "↓", "←", "→", "Esc"], RGB(255, 140, 0), base: RGB(30, 30, 30))
+    static var wasd: [Int: RGB] { highlight(["W", "A", "S", "D"], RGB(255, 0, 0), base: RGB(0, 40, 160)) }
+    static var arrows: [Int: RGB] { highlight(["↑", "↓", "←", "→", "Esc"], RGB(255, 140, 0), base: RGB(30, 30, 30)) }
 
     /// Hue follows the horizontal position of each key.
     static var rainbow: [Int: RGB] {
@@ -27,13 +27,13 @@ enum Presets {
         })
     }
 
-    static let builtIn: [(String, [Int: RGB])] = [
+    static var builtIn: [(String, [Int: RGB])] { [
         ("WASD (red on blue)", wasd),
         ("Arrows + Esc", arrows),
         ("Rainbow", rainbow),
         ("All white", all(.white)),
         ("All off", all(.black)),
-    ]
+    ] }
 }
 
 extension RGB {

@@ -4,8 +4,8 @@ import Foundation
 /// See docs/PROTOCOL.md for the full description of every field.
 public enum BAKey {
     public static let vendorID = 0x260D
-    /// The keyboard itself, over USB cable or Bluetooth LE.
-    public static let keyboardPID = 0x0130
+    /// Keyboard PIDs (USB cable or Bluetooth LE) of every known TK51G model. See `KeyboardModel`.
+    public static var keyboardPIDs: [Int] { KeyboardModel.all.flatMap(\.pids).sorted() }
     /// The 2.4 GHz receiver ("Ba-KEY308 2.4G Receiver"). Commands are relayed to the keyboard.
     public static let donglePID = 0x0042
 

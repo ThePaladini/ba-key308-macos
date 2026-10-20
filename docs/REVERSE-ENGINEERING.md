@@ -123,6 +123,23 @@ Two lessons came out of this step:
 
 See [ARCHITECTURE.md](ARCHITECTURE.md).
 
+## 9. Finding other models (2026-10-20)
+
+- **The Windows installer only ships one product file** (`Products/TK51G_0130.dll`), but its shared
+  `DeviceBase.dll` contains the namespace `DareuProducts`, several device families (`Tg`, `Hy`,
+  `HyOHID`, `Ws`, `Jm`, `Qf`) and generic receivers (PIDs `0x0037`, `0x0042`, `0x1131`).
+- **[linux-hardware.org](https://linux-hardware.org/?view=search&vendorid=260d)** lists 44 devices
+  with VID `0x260D`: Dareu A87, A87 Pro BT and EK75 keyboards, plus mice from other brands. That points
+  to an OEM supplying several brands.
+- **Two open-source Linux projects for the Dareu EK75** ([open-ek75](https://github.com/mateusands/open-ek75),
+  [Dareu-EK75-OpenRGB-Compat](https://github.com/KitsuneSemCalda/Dareu-EK75-OpenRGB-Compat)) speak the
+  same protocol: the same receiver addressing, regions 1 and 4, and 6×15 matrix. open-ek75 also documents
+  the **Husky Nomadic HTG200/500/800 V2** (Brazil) as a rebadged EK75.
+- **Dareu's web driver** ([dr.dareu.com](https://dr.dareu.com/)) loads a public profile per PID. Scanning
+  PIDs `0x0000`–`0x02FF` gave 91 keyboards with their platform code and firmware type. This is the
+  source of [DAREU-CATALOG.md](DAREU-CATALOG.md) and of the EK75 key layout
+  (`tools/gen_layout_dareu_json.py`).
+
 ## Tools used
 
 `innoextract`, `ilspycmd` 9.1, `strings`, `file`, `ioreg`, `system_profiler`, Python 3 + hidapi for the

@@ -1,5 +1,25 @@
 # Changelog
 
+## 1.1.0 — 2026-10-20
+
+**More keyboards (experimental)**
+- Recognizes the ANSI TK51G keyboards from Dareu's public catalog: **Dareu EK75** (PIDs `0x0101`,
+  `0x0045`), also sold as **Husky Nomadic HTG200 / HTG500 / HTG800 V2**. Works directly and through the
+  2.4G receiver. Not tested on hardware yet.
+- Per-model key layouts: the Key Painter, built-in layouts and the key-press Raindrop follow the
+  connected keyboard (ABNT2 BA-KEY308 or ANSI EK75). The EK75 layout comes from Dareu's own profile; its
+  LED cells are inferred (docs/KEY-MATRIX.md).
+- `bakey info` shows the detected model, and the CLI now detects **any** VID `0x260D` keyboard with the
+  configuration channel, so owners of other Dareu models can send a (read-only) compatibility report.
+- [docs/DAREU-CATALOG.md](docs/DAREU-CATALOG.md): all 91 keyboards in Dareu's public catalog, with platform and
+  firmware type. 19 use the same protocol family (`FwType 0`).
+- New GitHub issue form for compatibility reports.
+
+**Other**
+- `bakey showcase` adapts to Bluetooth (keyboard-driven scenes, one-packet-per-step animations).
+- Demo videos linked from the README.
+
+
 ## 1.0.0 — 2026-10-20
 
 First public release.

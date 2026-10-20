@@ -34,6 +34,27 @@ plano, a não ser que você escolha um efeito desenhado pelo Mac.
 > lista revisada (iluminação e perfis). Comandos de atualização de firmware e de gravação na memória
 > flash não podem ser enviados. Veja [docs/SAFETY.md](docs/SAFETY.md) (em inglês). Use por sua conta e risco.
 
+## Teclados compatíveis
+
+Todos são o mesmo projeto de referência da Dareu, chamado internamente de **TK51G**, vendido com marcas diferentes.
+
+| Teclado | Layout | USB PID (VID `0x260D`) | Situação |
+|---|---|---|---|
+| **Basike BA-KEY308** | ABNT2 | `0x0130` | ✅ testado (Bluetooth, USB); mapa de LEDs por tecla calibrado |
+| **Dareu EK75** | ANSI | `0x0101`, `0x0045` | 🧪 experimental: reconhecido, ainda não testado; mapa de LEDs deduzido |
+| **Husky Nomadic HTG200 / HTG500 / HTG800 V2** (Kabum) | ANSI | `0x0101` | 🧪 experimental (mesmo hardware do EK75) |
+| Receptor 2.4G dos modelos acima | — | `0x0042` | implementado, ainda não testado |
+| Outros teclados Dareu com o mesmo protocolo (`FwType 0`): Z82 / Z82 PRO, A98, FK98, A87 PRO, EK87 PRO, A104, EK106 PRO, EK81 MAX, COOL 98, DK87 PRO, DK108 PRO, EK815 MAX, FLEX 75 | vários | ver [catálogo](docs/DAREU-CATALOG.md) | ❔ efeitos provavelmente funcionam; o app ainda não os reconhece; o `bakey info` detecta, mande um relato |
+| Revisões novas do EK75, CK75 PRO, teclados magnéticos "HE/RT" (`FwType` ≠ 0) | | | ❌ protocolo diferente |
+
+A lista completa vem do catálogo público do driver web da Dareu, consultado para este projeto:
+[docs/DAREU-CATALOG.md](docs/DAREU-CATALOG.md) (em inglês). Como sabemos que é a mesma plataforma: o catálogo público do driver web da Dareu lista os PIDs `0x0101` e
+`0x0045` como `"Model": "TK51G"`, e o Husky Nomadic é documentado pelo
+[open-ek75](https://github.com/mateusands/open-ek75) como um EK75 com outra marca. **Tem um desses, ou
+outro teclado `0x260D`?** Mande um
+[relato de compatibilidade](https://github.com/ThePaladini/ba-key308-macos/issues/new?template=compatibility-report.yml).
+O comando `bakey info` usado no relato só lê, não altera nada.
+
 ## Recursos
 
 - **Painel na barra de menus**
@@ -151,6 +172,7 @@ para outros modelos são bem-vindos.
 | [KEY-MATRIX.md](docs/KEY-MATRIX.md) | IDs das teclas e a matriz de LEDs calibrada |
 | [BLUETOOTH.md](docs/BLUETOOTH.md) | Por que o Bluetooth é lento para iluminação, os experimentos e a solução |
 | [SOFT-EFFECTS.md](docs/SOFT-EFFECTS.md) | Efeitos do Mac, a investigação sobre a velocidade da gota de chuva original, como criar um efeito |
+| [DAREU-CATALOG.md](docs/DAREU-CATALOG.md) | Todos os produtos do catálogo público da Dareu: plataforma, tipo de firmware e o que isso significa para compatibilidade |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Organização do código e decisões de projeto |
 | [SAFETY.md](docs/SAFETY.md) | Comandos que podem inutilizar o teclado e como o projeto os bloqueia |
 | [REVERSE-ENGINEERING.md](docs/REVERSE-ENGINEERING.md) | Passo a passo de como o protocolo foi recuperado |
@@ -164,6 +186,7 @@ para outros modelos são bem-vindos.
 | Bluetooth LE | ✅ testado |
 | Cabo USB | ✅ testado (cerca de 130× mais rápido que o Bluetooth para iluminação) |
 | Receptor 2.4G | implementado a partir do código do Windows, **ainda não testado** |
+| Dareu EK75 / Husky Nomadic | reconhecidos desde a v1.1.0, **ainda não testados** |
 | Efeitos, cor, velocidade, brilho, luz lateral | ✅ |
 | Cores por tecla, efeitos do Mac, gota de chuva ao apertar | ✅ |
 | Bateria, informações do firmware | ✅ |

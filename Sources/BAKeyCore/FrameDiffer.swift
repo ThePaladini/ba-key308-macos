@@ -17,11 +17,11 @@ public struct FrameDiffer {
     public private(set) var shown: [[RGB]]?
 
     /// Cells that have an LED under a key. Only these are compared.
-    static let litMask: [[Bool]] = {
+    static var litMask: [[Bool]] {
         var m = [[Bool]](repeating: [Bool](repeating: false, count: KeyLayout.columns), count: KeyLayout.rows)
         for k in KeyLayout.keys { for c in k.cells { m[c.row][c.col] = true } }
         return m
-    }()
+    }
 
     public init() {}
 
@@ -31,8 +31,9 @@ public struct FrameDiffer {
     /// The single color of all lit cells, if they share one.
     public static func uniformColor(_ frame: [[RGB]]) -> RGB? {
         var color: RGB?
+        let lit = litMask
         for r in 0..<frame.count {
-            for c in 0..<frame[r].count where litMask[r][c] {
+            for c in 0..<frame[r].count where lit[r][c] {
                 if let color, color != frame[r][c] { return nil }
                 color = frame[r][c]
             }
@@ -47,10 +48,11 @@ public struct FrameDiffer {
     public func dirtyRows(_ frame: [[RGB]], minScore: Int = 1) -> [Int] {
         guard let shown else { return Array(0..<frame.count) }
         var scored: [(row: Int, score: Int)] = []
+        let lit = Self.litMask
         for r in 0..<frame.count {
             var score = 0
             var dark = true
-            for c in 0..<frame[r].count where Self.litMask[r][c] {
+            for c in 0..<frame[r].count where lit[r][c] {
                 let a = frame[r][c], b = shown[r][c]
                 score += abs(Int(a.r) - Int(b.r)) + abs(Int(a.g) - Int(b.g)) + abs(Int(a.b) - Int(b.b))
                 if a != .black { dark = false }

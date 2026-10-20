@@ -61,13 +61,15 @@ func number(_ s: String) -> UInt8? {
 }
 
 func connect() -> KeyboardClient {
-    let monitor = DeviceMonitor(scheduleOnMainRunLoop: false)
+    // Any 0x260D device with the 64-byte configuration channel, so unknown models can be reported.
+    let monitor = DeviceMonitor(scheduleOnMainRunLoop: false, anyProduct: true)
     CFRunLoopRunInMode(.defaultMode, 0.05, false)
     var lastError: Error = BAKeyError.noDevice
     for hid in monitor.candidates() {
         do {
             let c = try KeyboardClient(hid: hid)
             if verbose { c.log = { print($0) } }
+            KeyLayout.current = c.model ?? .baKey308
             return c
         } catch { lastError = error }
     }
@@ -86,6 +88,15 @@ func run() throws {
         let locks = try kb.locks()
         let profile = try kb.activeProfile()
         print("\(i.name) via \(i.transport)  (report ID \(kb.hid.reportID))")
+        if kb.model == nil {
+            print(String(format: "Model: unknown (PID 0x%04X). Not a model this app knows yet; this output is useful for a", kb.keyboardPID)
+                  + " compatibility report: github.com/ThePaladini/ba-key308-macos/issues")
+        }
+        if let m = kb.model {
+            print("Model: \(m.name), \(m.layoutName), PID \(String(format: "0x%04X", kb.keyboardPID))"
+                  + (m.tested ? "" : "  [not tested with this app yet: please report at github.com/ThePaladini/ba-key308-macos/issues]")
+                  + (m.ledMapCalibrated ? "" : "  [per-key LED map inferred]"))
+        }
         print("Firmware \(i.firmware), hardware \(i.hardware)")
         print("Battery \(b.level)% \(b.status.map { "\($0)" } ?? "")")
         print("Profile \(profile) of \(try kb.profileIDs().count), Win lock \(locks.winLock ? "on" : "off"), Mac mode \(locks.macMode ? "on" : "off")")

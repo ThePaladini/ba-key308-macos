@@ -168,3 +168,47 @@ final class FrameDifferTests: XCTestCase {
         XCTAssertEqual(plan.map { $0[9] }, [3])
     }
 }
+
+final class KeyboardModelTests: XCTestCase {
+    func testPIDsMapToModels() {
+        XCTAssertEqual(KeyboardModel.forPID(0x0130), .baKey308)
+        XCTAssertEqual(KeyboardModel.forPID(0x0101), .ek75)
+        XCTAssertEqual(KeyboardModel.forPID(0x0045), .ek75)
+        XCTAssertNil(KeyboardModel.forPID(0x0042), "the receiver is not a keyboard model")
+        XCTAssertTrue(BAKey.keyboardPIDs.contains(0x0130) && BAKey.keyboardPIDs.contains(0x0101))
+    }
+
+    func testEveryModelLayoutIsConsistent() {
+        for model in KeyboardModel.all {
+            var seen = Set<MatrixCell>()
+            for k in model.keys {
+                for c in k.cells {
+                    XCTAssert((0..<KeyLayout.rows).contains(c.row) && (0..<KeyLayout.columns).contains(c.col), "\(model.name) \(k.label)")
+                    XCTAssertTrue(seen.insert(c).inserted, "\(model.name): cell \(c) used twice")
+                }
+            }
+            XCTAssertEqual(Set(model.keys.map(\.id)).count, model.keys.count, "\(model.name): duplicate key IDs")
+        }
+    }
+
+    func testEK75IsANSI() {
+        let ids = Set(KeyboardModel.ek75.keys.map(\.id))
+        XCTAssertFalse(ids.contains(100), "no ISO backslash key")
+        XCTAssertFalse(ids.contains(135), "no ABNT2 slash key")
+        XCTAssertEqual(KeyboardModel.ek75.keys.first { $0.id == 73 }?.label, "Enter")
+    }
+
+    func testEK75KeysReachableInEventTapMode() {
+        let reachable = Set(KeyPressMonitor.usageForKeyCode.values).union(KeyPressMonitor.modifiers.values.map(\.0))
+        for k in KeyboardModel.ek75.keys where !k.cells.isEmpty && k.hidUsage != 0 {
+            XCTAssertTrue(reachable.contains(k.hidUsage), "EK75 \(k.label) (HID 0x\(String(k.hidUsage, radix: 16)))")
+        }
+    }
+
+    func testLayoutFollowsCurrentModel() {
+        defer { KeyLayout.current = .baKey308 }
+        KeyLayout.current = .ek75
+        XCTAssertNil(KeyLayout.key(id: 135))
+        XCTAssertEqual(KeyLayout.frame(from: [78: RGB(1, 2, 3)])[4][1], RGB(1, 2, 3), "wide ANSI Left Shift fills both cells")
+    }
+}

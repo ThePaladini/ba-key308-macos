@@ -65,3 +65,8 @@ Karabiner-Elements → Devices.
 SwiftUI's `MenuBarExtra` (window style) grows with its content but doesn't shrink back. Since
 v1.0.0+ the panel measures its content and resizes itself (`WindowHeightFitter` in
 `MenuContentView.swift`). If a gap still appears, close and reopen the menu.
+
+### `bakey` says "Keyboard did not answer" while the app is running
+The keyboard has a single command "mailbox". If the menu bar app is talking to it at the same moment
+(right after it launches or reconnects, or while a Mac effect is running), a CLI command can collide
+and time out. Wait a few seconds and retry, or quit the app while using the CLI for longer sessions.

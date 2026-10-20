@@ -19,6 +19,7 @@ Each item below carries one of these markers:
 |---|---|---|---|
 | Keyboard (USB cable or Bluetooth LE) | `0x260D` | `0x0130` | ✅ Seen over BLE as "BA-KEY308" |
 | 2.4 GHz receiver | `0x260D` | `0x0042` | 📖 "Ba-KEY308 2.4G Receiver" |
+| Dareu EK75 / Husky Nomadic (ANSI TK51G) | `0x260D` | `0x0101`, `0x0045` | Same `FwType 0` protocol per Dareu's catalog and two Linux projects; recognized by the app since v1.1.0, untested |
 
 ✅ Over the USB cable the keyboard enumerates as **"USB_Keyboard"** (same VID/PID, 12 Mb/s full speed).
 In wired mode the Bluetooth connection drops, so only one of the two is visible at a time.
