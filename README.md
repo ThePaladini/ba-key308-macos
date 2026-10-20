@@ -3,7 +3,11 @@
 <h1 align="center">BA-KEY Menu</h1>
 
 <p align="center">
-A native macOS menu bar app and CLI for the <b>BASIC BA-KEY308</b> keyboard,<br>
+<b>English</b> · <a href="README.pt-BR.md">Português (Brasil)</a>
+</p>
+
+<p align="center">
+A native macOS menu bar app and CLI for the <b>BASIC BA-KEY308</b> keyboard (a Brazilian brand),<br>
 a <b>Dareu TK51G</b>-platform board (USB VID <code>0x260D</code>, PID <code>0x0130</code>), whose official software is Windows-only.
 </p>
 
