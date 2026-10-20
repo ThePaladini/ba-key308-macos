@@ -18,6 +18,11 @@ um teclado da plataforma <b>Dareu TK51G</b> (USB VID <code>0x260D</code>, PID <c
 <a href="#outros-teclados-dareu">Outros teclados Dareu</a>
 </p>
 
+<p align="center">
+<a href="https://www.youtube.com/shorts/MuPTBXvzvFQ"><img src="https://img.youtube.com/vi/MuPTBXvzvFQ/hqdefault.jpg" width="320" alt="Vídeo de demonstração"></a><br>
+<sub>▶ <a href="https://www.youtube.com/shorts/MuPTBXvzvFQ">Vídeo de demonstração</a> (35 s) · <a href="https://www.youtube.com/shorts/qZohvX95IrM">English version</a></sub>
+</p>
+
 ---
 
 Recuperamos o protocolo descompilando o app oficial de configuração para Windows. Este app conversa

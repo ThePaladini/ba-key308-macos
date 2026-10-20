@@ -18,6 +18,11 @@ a <b>Dareu TK51G</b>-platform board (USB VID <code>0x260D</code>, PID <code>0x01
 <a href="#other-dareu-keyboards">Other Dareu keyboards</a>
 </p>
 
+<p align="center">
+<a href="https://www.youtube.com/shorts/qZohvX95IrM"><img src="https://img.youtube.com/vi/qZohvX95IrM/hqdefault.jpg" width="320" alt="Demo video"></a><br>
+<sub>▶ <a href="https://www.youtube.com/shorts/qZohvX95IrM">Demo video</a> (35 s) · <a href="https://www.youtube.com/shorts/MuPTBXvzvFQ">versão em português</a></sub>
+</p>
+
 ---
 
 The protocol was recovered by decompiling the official Windows configuration app. This app speaks
