@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-A native macOS menu bar app and CLI for the <b>BASIC BA-KEY308</b> keyboard (a Brazilian brand),<br>
+A native macOS menu bar app and CLI for the <b>Basike BA-KEY308</b> keyboard (Basike is a Brazilian brand),<br>
 a <b>Dareu TK51G</b>-platform board (USB VID <code>0x260D</code>, PID <code>0x0130</code>), whose official software is Windows-only.
 </p>
 
@@ -25,7 +25,7 @@ that protocol to the keyboard over **Bluetooth, the USB cable or the 2.4G receiv
 drivers and no kernel extensions, it doesn't use the Windows code, and nothing runs in the background
 unless you choose a Mac-rendered effect.
 
-> **Unofficial.** Not affiliated with BASIC or Dareu. It only sends commands from a reviewed
+> **Unofficial.** Not affiliated with Basike or Dareu. It only sends commands from a reviewed
 > allowlist (lighting and profiles); firmware-update and flash commands cannot be sent. See
 > [docs/SAFETY.md](docs/SAFETY.md). Use at your own risk.
 

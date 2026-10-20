@@ -7,7 +7,7 @@
 </p>
 
 <p align="center">
-App de barra de menus e linha de comando para macOS, feito para o teclado <b>BASIC BA-KEY308</b>,<br>
+App de barra de menus e linha de comando para macOS, feito para o teclado <b>Basike BA-KEY308</b>,<br>
 um teclado da plataforma <b>Dareu TK51G</b> (USB VID <code>0x260D</code>, PID <code>0x0130</code>) cujo software oficial só existe para Windows.
 </p>
 
@@ -25,7 +25,7 @@ com o teclado usando esse mesmo protocolo, por **Bluetooth, cabo USB ou receptor
 de drivers nem de extensões de kernel, não usa o código do Windows e não fica nada rodando em segundo
 plano, a não ser que você escolha um efeito desenhado pelo Mac.
 
-> **Não oficial.** Não tem nenhuma ligação com a BASIC nem com a Dareu. O app só envia comandos de uma
+> **Não oficial.** Não tem nenhuma ligação com a Basike nem com a Dareu. O app só envia comandos de uma
 > lista revisada (iluminação e perfis). Comandos de atualização de firmware e de gravação na memória
 > flash não podem ser enviados. Veja [docs/SAFETY.md](docs/SAFETY.md) (em inglês). Use por sua conta e risco.
 
@@ -120,7 +120,7 @@ Requer o Xcode ou as Command Line Tools (Swift 5.9+).
 
 ## Outros teclados Dareu
 
-O BA-KEY308 é um projeto **Dareu "TK51G"** (código de modelo `TK51G_0130`) vendido com a marca BASIC.
+O BA-KEY308 é um projeto **Dareu "TK51G"** (código de modelo `TK51G_0130`) vendido com a marca brasileira Basike.
 O protocolo está na `DeviceBase.dll`, compartilhada pelos apps Windows da Dareu em vários produtos.
 Outros teclados baseados em Dareu (`VID 0x260D`) muito provavelmente usam o mesmo protocolo, só mudando
 o PID, a tabela de teclas e a matriz de LEDs.

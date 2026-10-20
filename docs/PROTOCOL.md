@@ -25,7 +25,7 @@ In wired mode the Bluetooth connection drops, so only one of the two is visible 
 | Bootloader (DFU) | `0x260D` | `0xFFFA` or `0x0055` | 📖 Only appears after a DFU command |
 
 `0x260D` is the vendor ID of **Dareu**. The BA-KEY308 is Dareu's "TK51G" platform, model code
-`TK51G_0130`, sold under the BASIC brand. Other Dareu-based keyboards very likely use the same protocol
+`TK51G_0130`, sold under the Brazilian Basike brand. Other Dareu-based keyboards very likely use the same protocol
 with a different PID and key map.
 
 ## 2. Transport
