@@ -17,6 +17,7 @@ USAGE
   bakey get <class> <cmd> [byte...]   Raw GET (read-only) for exploring; hex or decimal
   bakey bench                         Measure command latency and frame rate of the current link
   bakey demo [seconds]                Host-driven rainbow animation (per-key mode)
+  bakey showcase [countdown]          ~35 s timed light show for filming, then restores lighting
   Add -v to any command to print the raw packets.
 
 EXAMPLES
@@ -217,6 +218,12 @@ func run() throws {
         let end = Date().addingTimeInterval(seconds)
         while Date() < end { CFRunLoopRunInMode(.defaultMode, 0.1, false) }
         print("\(count) key presses in \(Int(seconds)) s")
+
+    case "showcase":
+        // Timed light show for filming. Optional countdown in seconds (default 5).
+        let kb = connect()
+        print("Transport: \(kb.hid.isReceiver ? "2.4G receiver" : kb.hid.transport)  (USB recommended for smooth scenes)")
+        try Showcase.run(kb, countdown: Int(args.first ?? "5") ?? 5)
 
     case "layout":
         for k in KeyLayout.keys.sorted(by: { ($0.cells.first?.row ?? 9, $0.cells.first?.col ?? 0) < ($1.cells.first?.row ?? 9, $1.cells.first?.col ?? 0) }) {

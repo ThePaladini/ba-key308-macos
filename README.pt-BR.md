@@ -44,7 +44,7 @@ plano, a não ser que você escolha um efeito desenhado pelo Mac.
 - **Pintor de teclas**: clique ou arraste para colorir cada tecla. Tem conta-gotas, preenchimento,
   layouts prontos (WASD, setas, arco-íris…) e layouts salvos. As cores são reenviadas quando o teclado
   reconecta.
-- **Linha de comando `bakey`**: `bakey info`, `bakey effect back wave --speed 3`,
+- **Linha de comando `bakey`**: `bakey showcase` (show de luzes cronometrado para filmar), `bakey info`, `bakey effect back wave --speed 3`,
   `bakey keys W=ff0000 A=ff0000 …`, consultas brutas só de leitura, testes de velocidade.
 
 Os efeitos do teclado ficam **gravados no próprio teclado** e continuam funcionando em qualquer
