@@ -51,6 +51,8 @@ enum Lab {
             try kb.hid.setFeature(p)
             print(String(format: "fill packet sent in %.0f ms", -t.timeIntervalSinceNow * 1000))
 
+        case "stress":
+            print("use: bakey lab-stress <scenario> <seconds> [interval-ms]")
         default:
             print("bakey lab sustained | async [n] | partial [nocommit] | fill [RRGGBB]")
         }
@@ -88,5 +90,111 @@ enum Lab {
         buffers.forEach { $0.deallocate() }
         if box.errors > 0 { print("\(box.errors) of \(n) reports failed") }
         return elapsed / Double(n)
+    }
+}
+
+/// `bakey lab stress <scenario> <seconds> [interval-ms]`: reproduces what the app sends when settings
+/// change, logging every command's latency and the exact time of any disconnect (HID removal).
+/// Restores the original lighting at the end. See docs/BLUETOOTH.md ("Disconnect investigation").
+enum Stress {
+    static func run(scenario: String, seconds: Double, intervalMs: Double) throws {
+        final class Flag { var removedAt: Date?; var events: [String] = [] }
+        let flag = Flag()
+        let monitor = DeviceMonitor()   // scheduled on the main run loop; pumped below
+        let start = Date()
+        func stamp() -> String { String(format: "%7.2fs", -start.timeIntervalSinceNow) }
+        monitor.onChange = {
+            let present = !monitor.candidates().isEmpty
+            flag.events.append("\(stamp()) HID \(present ? "appeared" : "REMOVED")")
+            print(flag.events.last!)
+            if !present { flag.removedAt = Date() }
+        }
+        func pump(_ t: Double = 0) { CFRunLoopRunInMode(.defaultMode, t, false) }
+        pump(0.2)
+
+        func open() -> KeyboardClient? {
+            for hid in monitor.candidates() { if let c = try? KeyboardClient(hid: hid) { return c } }
+            return nil
+        }
+        guard var kb = open() else { throw BAKeyError.noDevice }
+        let region = LEDRegion.backlight.rawValue
+        let profile = try kb.activeProfile()
+        let original = try kb.effect(region: region, profile: profile)
+        let originalBrightness = try kb.brightness(region: region)
+        let side = LEDRegion.sidelight.rawValue
+        let originalSide = try kb.effect(region: side, profile: profile)
+        let originalSideBrightness = try kb.brightness(region: side)
+        print("scenario=\(scenario) seconds=\(seconds) interval=\(intervalMs)ms transport=\(kb.hid.transport)")
+        print("original: effect \(original.effect) speed \(original.speed) brightness \(originalBrightness)")
+
+        var ops = 0, failures = 0, disconnects = 0
+        var latencies: [Double] = []
+        var i = 0
+        while -start.timeIntervalSinceNow < seconds {
+            let t0 = Date()
+            do {
+                switch scenario {
+                case "read":
+                    _ = try kb.battery()
+                case "brightness":   // slider drag: alternate levels
+                    try kb.setBrightness(i % 2 == 0 ? 120 : 255, region: region, profile: profile)
+                case "effect":       // picking effects in the menu
+                    try kb.setEffect(EffectState(effect: i % 2 == 0 ? 6 : 1, speed: 2, colors: i % 2 == 0 ? [] : [.white]),
+                                     region: region, profile: profile)
+                case "speed":        // speed slider across the full 1...255 range
+                    let speeds: [UInt8] = [1, 40, 120, 200, 255]
+                    try kb.setEffect(EffectState(effect: 24, speed: speeds[i % speeds.count], colors: [.white]),
+                                     region: region, profile: profile)
+                case "color":        // color picker drag on the side light
+                    try kb.setEffect(EffectState(effect: 1, colors: [RGB(hue: Double(i % 24) / 24)]),
+                                     region: LEDRegion.sidelight.rawValue, profile: profile)
+                case "color-back":   // same, on the backlight
+                    try kb.setEffect(EffectState(effect: 1, colors: [RGB(hue: Double(i % 24) / 24)]),
+                                     region: region, profile: profile)
+                case "side-toggle":  // side light effect changes, fixed color
+                    try kb.setEffect(EffectState(effect: i % 2 == 0 ? 1 : 2, speed: 2, colors: [.white]),
+                                     region: LEDRegion.sidelight.rawValue, profile: profile)
+                case "frames":       // painter / Mac effects
+                    if i == 0 { try kb.setEffect(EffectState(effect: LightingEffect.streamingID), region: region, profile: profile) }
+                    let c = RGB(hue: Double(i % 12) / 12)
+                    try kb.sendFrame([[RGB]](repeating: [RGB](repeating: c, count: KeyLayout.columns), count: KeyLayout.rows))
+                default:
+                    print("scenarios: read brightness effect speed color frames"); return
+                }
+                ops += 1
+                latencies.append(-t0.timeIntervalSinceNow * 1000)
+            } catch {
+                failures += 1
+                print("\(stamp()) op \(i) FAILED: \(error.localizedDescription)")
+                // A transport error means the handle died (the link dropped, even if it is already back).
+                if case BAKeyError.ioFailed = error { flag.removedAt = flag.removedAt ?? Date() }
+                Thread.sleep(forTimeInterval: 0.3)
+            }
+            pump()
+            if flag.removedAt != nil {
+                disconnects += 1
+                print("\(stamp()) disconnect #\(disconnects); waiting for the keyboard to come back…")
+                let waitStart = Date()
+                var again: KeyboardClient?
+                while again == nil && -waitStart.timeIntervalSinceNow < 60 {
+                    pump(0.5)
+                    if !monitor.candidates().isEmpty, let c = open(), (try? c.info()) != nil { again = c }
+                }
+                guard let again else { print("did not come back within 60 s"); break }
+                print(String(format: "%@ reconnected after %.1f s", stamp(), -waitStart.timeIntervalSinceNow))
+                kb = again
+                flag.removedAt = nil
+            }
+            i += 1
+            if intervalMs > 0 { Thread.sleep(forTimeInterval: intervalMs / 1000) }
+        }
+        try? kb.setEffect(original, region: region, profile: profile)
+        try? kb.setBrightness(originalBrightness, region: region, profile: profile)
+        try? kb.setEffect(originalSide, region: side, profile: profile)
+        try? kb.setBrightness(originalSideBrightness, region: side, profile: profile)
+        latencies.sort()
+        let p = { (q: Double) in latencies.isEmpty ? 0 : latencies[min(latencies.count - 1, Int(Double(latencies.count) * q))] }
+        print(String(format: "RESULT %@: %d ok, %d failed, %d disconnects, latency p50 %.0f ms, p95 %.0f ms, max %.0f ms",
+                     scenario, ops, failures, disconnects, p(0.5), p(0.95), latencies.last ?? 0))
     }
 }

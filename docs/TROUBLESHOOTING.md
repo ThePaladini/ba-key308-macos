@@ -70,3 +70,9 @@ v1.0.0+ the panel measures its content and resizes itself (`WindowHeightFitter` 
 The keyboard has a single command "mailbox". If the menu bar app is talking to it at the same moment
 (right after it launches or reconnects, or while a Mac effect is running), a CLI command can collide
 and time out. Wait a few seconds and retry, or quit the app while using the CLI for longer sessions.
+
+### The keyboard disconnects (Bluetooth) right after changing colors
+Fixed in v1.1.1. The firmware freezes when it receives several color changes in quick succession
+(e.g. dragging the color picker), and the Bluetooth link times out. The app now spaces color changes at
+least 1.2 s apart, so the last color you pick may take about a second to apply. Details in
+[BLUETOOTH.md](BLUETOOTH.md#disconnect-investigation-2026-10-20-rapid-color-changes-freeze-the-firmware).

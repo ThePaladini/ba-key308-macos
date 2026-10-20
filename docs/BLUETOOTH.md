@@ -79,3 +79,35 @@ Over USB nothing changes in practice: all changed rows go out every frame, up to
   fast as USB, which would make wireless effects smooth.
 - **Smaller packets don't help.** The cost is per packet, not per byte.
 - **The side light (region 4)** is one row of 16 LEDs, so any side-light frame is a single packet.
+
+## Disconnect investigation (2026-10-20): rapid color changes freeze the firmware
+
+**Symptom (user report):** Bluetooth sometimes disconnects while changing settings in the app. It
+was hard to reproduce by hand.
+
+**Method:** `bakey lab-stress <scenario> <seconds> [interval-ms]` sends the same writes the app sends,
+back to back. It logs each command's latency and every HID removal. In parallel,
+`log stream --predicate 'process == "bluetoothd"'` recorded the link layer. macOS doesn't persist these
+logs, but streams them live.
+
+| Scenario (Bluetooth, writes back to back, ~0.45 s each) | Writes | Link drops |
+|---|---|---|
+| Battery reads | 103 | 0 |
+| Brightness 120 ↔ 255 | 101 | 0 |
+| Effect Raindrop ↔ Static | 104 | 0 |
+| Speed 1 → 255 (Area Reactive) | 101 | 0 |
+| Side-light effect Static ↔ Breathing, fixed color | 135 | 0 |
+| **Side-light Static, color changes every write** | 12, then dropped | **1** |
+| **Backlight Static, color changes every write** | 3, then dropped | **1** |
+| Side-light color changes, **1 s apart** | 41 | 0 |
+
+**What bluetoothd logged** at the drop: `tx [S=0:F=66]` (66 packets sent, none acknowledged) for
+about 1.5 s, then `Connection timed out … reason 708`, i.e. the BLE supervision timeout. The keyboard
+stopped answering on the radio and reconnected by itself about 1 s later. That looks like a firmware
+stall or reset. My inference is that each new color makes it re-render and persist, and a rapid series
+overwhelms it.
+
+**Fix (v1.1.1):** `KeyboardClient.colorWriteSpacing = 1.2 s`. An effect write whose colors differ from
+the previous one for that region waits until 1.2 s have passed. In the app, color changes are also
+debounced for 0.5 s, so a color-picker drag sends only where it stops. Per-key frames (effect 18) are
+RAM-only and unaffected: 45 back-to-back frames, 0 drops.

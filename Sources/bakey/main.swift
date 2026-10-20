@@ -209,6 +209,11 @@ func run() throws {
         }
         print(String(format: "%d frames in %.1f s = %.1f fps", n, seconds, Double(n) / seconds))
 
+    case "lab-stress":
+        // Opens the keyboard itself (not via connect()) so it can survive and log disconnects.
+        guard args.count >= 2, let secs = Double(args[1]) else { fail("Usage: bakey lab-stress <read|brightness|effect|speed|color|frames> <seconds> [interval-ms]") }
+        try Stress.run(scenario: args[0], seconds: secs, intervalMs: args.count > 2 ? Double(args[2]) ?? 0 : 0)
+
     case "lab":
         let kb = connect()
         print("Transport: \(kb.hid.isReceiver ? "2.4G receiver" : kb.hid.transport)")

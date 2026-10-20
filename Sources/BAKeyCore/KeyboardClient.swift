@@ -54,6 +54,16 @@ public final class KeyboardClient {
     public var model: KeyboardModel? { KeyboardModel.forPID(keyboardPID) }
     public var log: ((String) -> Void)?
 
+    /// Minimum gap between effect writes that change a region's colors.
+    ///
+    /// Measured on the BA-KEY308 over Bluetooth (2026-10-20, `bakey lab-stress`): color changes sent
+    /// back to back (~2 per second) freeze the firmware within a few writes. The radio stops
+    /// acknowledging and macOS drops the link with a supervision timeout (reason 708), then the keyboard
+    /// reconnects by itself. The same writes 1 s apart survived 41/41; brightness, effect and speed changes
+    /// back to back survived 100+ each. See docs/BLUETOOTH.md.
+    public static let colorWriteSpacing: TimeInterval = 1.2
+    private var lastColorWrite: [UInt8: (time: Date, colors: [RGB])] = [:]
+
     /// SET commands this client is allowed to send. Everything else must be a GET.
     /// This is the second safety layer after `CommandClass` (see docs/SAFETY.md).
     static let allowedSets: Set<[UInt8]> = [
@@ -205,6 +215,14 @@ public final class KeyboardClient {
 
     public func setEffect(_ s: EffectState, region: UInt8, profile: UInt8) throws {
         let colors = Array(s.colors.prefix(5))
+        if !colors.isEmpty, let last = lastColorWrite[region], last.colors != colors {
+            let wait = Self.colorWriteSpacing + last.time.timeIntervalSinceNow
+            if wait > 0 {
+                log?(String(format: "(waiting %.2f s between color changes)", wait))
+                Thread.sleep(forTimeInterval: wait)
+            }
+        }
+        defer { if !colors.isEmpty { lastColorWrite[region] = (Date(), colors) } }
         // The firmware acknowledges but ignores a write with speed 0.
         let speed = min(max(s.speed, speedRange.lowerBound), speedRange.upperBound)
         let payload = [region, s.effect, s.flag, speed, UInt8(colors.count)] + colors.flatMap(\.bytes)

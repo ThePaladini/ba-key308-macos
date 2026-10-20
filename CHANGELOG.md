@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.1 — 2026-10-20
+
+**Fixed**
+- **Bluetooth disconnects when changing colors.** Several color changes in quick succession (dragging
+  the color picker, clicking through swatches) froze the keyboard's firmware, and macOS dropped the link
+  (supervision timeout). Color-changing writes are now spaced at least 1.2 s apart, and the color picker
+  waits 0.5 s before sending. Reproduced and verified with the new `bakey lab-stress` command; see
+  [docs/BLUETOOTH.md](docs/BLUETOOTH.md).
+
+
 ## 1.1.0 — 2026-10-20
 
 **More keyboards (experimental)**
