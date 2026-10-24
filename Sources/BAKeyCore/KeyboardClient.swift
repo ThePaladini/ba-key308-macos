@@ -50,6 +50,13 @@ public final class KeyboardClient {
     public private(set) var target: UInt8 = 0
     /// PID of the keyboard being talked to (directly, or behind the receiver).
     public private(set) var keyboardPID: Int
+    /// Whether the one-packet fill (`PacketBuilder.fillPacket`) may be used on this link.
+    ///
+    /// Only over Bluetooth, where it was verified and where it saves time (~154 ms per packet).
+    /// **Through the 2.4G receiver a single fill packet makes the receiver reset**: it drops off USB
+    /// ~3 s later and re-enumerates (measured 2026-10-24). Over USB it isn't needed, so it's not used there either.
+    public var supportsFillPacket: Bool { !hid.isReceiver && hid.transport.localizedCaseInsensitiveContains("bluetooth") }
+
     /// The keyboard model, which decides the key layout. nil for an unknown PID.
     public var model: KeyboardModel? { KeyboardModel.forPID(keyboardPID) }
     public var log: ((String) -> Void)?

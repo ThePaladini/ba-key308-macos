@@ -252,3 +252,16 @@ final class BluetoothBatteryTests: XCTestCase {
         XCTAssertTrue(BluetoothBatteryDevice.parse(Data("not json".utf8)).isEmpty)
     }
 }
+
+final class FillPacketPolicyTests: XCTestCase {
+    /// The 2.4G receiver resets when it relays a fill packet, so a uniform frame must go out as rows there.
+    func testUniformFrameWithoutFillUsesRows() {
+        let d = FrameDiffer()
+        let lit = KeyLayout.keys.filter { !$0.cells.isEmpty }.map(\.id)
+        let blue = KeyLayout.frame(from: Dictionary(uniqueKeysWithValues: lit.map { ($0, RGB(0, 0, 255)) }))
+        let plan = d.plan(blue, reportID: 0, target: 0x10, allowFill: false)
+        XCTAssertEqual(plan.count, KeyLayout.rows)
+        XCTAssertTrue(plan.allSatisfy { $0[8] == 0x81 }, "no fill packet (flags 0x03)")
+        XCTAssertTrue(plan.allSatisfy { $0[1] == 0x10 }, "addressed to the keyboard behind the receiver")
+    }
+}

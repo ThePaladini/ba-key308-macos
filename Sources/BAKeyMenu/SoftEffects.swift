@@ -9,6 +9,7 @@ import Foundation
 enum SoftEffect: Int, CaseIterable, Identifiable {
     // Declaration order = menu order.
     case ripple = 203
+    case rippleInverted = 204
     case raindrop = 200
     case wave = 201
     case breathing = 202
@@ -18,6 +19,7 @@ enum SoftEffect: Int, CaseIterable, Identifiable {
     var name: String {
         switch self {
         case .ripple: return "Raindrop (Mac, on key press)"
+        case .rippleInverted: return "Raindrop inverted (Mac, on key press)"
         case .raindrop: return "Rain (Mac, random)"
         case .wave: return "Wave (Mac)"
         case .breathing: return "Breathing (Mac)"
@@ -25,7 +27,7 @@ enum SoftEffect: Int, CaseIterable, Identifiable {
     }
 
     /// Needs key presses (and therefore the Input Monitoring permission).
-    var isReactive: Bool { self == .ripple }
+    var isReactive: Bool { self == .ripple || self == .rippleInverted }
 }
 
 /// Stateful frame generator. `speed` is a multiplier: 1.0 ≈ the firmware's default pace.
@@ -58,7 +60,7 @@ struct SoftRenderer {
     init(effect: SoftEffect) { self.effect = effect }
 
     /// True when there is nothing to draw, so the engine can stop sending frames.
-    var isIdle: Bool { effect == .ripple && ripples.isEmpty }
+    var isIdle: Bool { effect.isReactive && ripples.isEmpty }
 
     /// A key was pressed (reactive effects only).
     mutating func press(_ key: KeyDef, color: RGB?) {
@@ -76,12 +78,17 @@ struct SoftRenderer {
         var colors: [Int: RGB] = [:]
 
         switch effect {
-        case .ripple:
+        case .ripple, .rippleInverted:
             // Each press: the key flashes, then a ring spreads outward and fades, like a drop in water.
+            // Inverted: the whole keyboard is lit (chosen color, white by default) and the drop is a
+            // shadow. The pressed key goes dark and a dark ring spreads while the light comes back.
             ripples.removeAll { time - $0.born >= Self.rippleLife }
+            let inverted = effect == .rippleInverted
+            let base = color ?? .white
             for key in litKeys {
                 let p = CGPoint(x: key.rect.midX, y: key.rect.midY)
                 var best = RGB.black
+                var darkness = 0.0
                 for r in ripples {
                     let age = time - r.born
                     let fade = 1 - age / Self.rippleLife
@@ -90,9 +97,14 @@ struct SoftRenderer {
                     var ring = exp(-ringD * ringD)
                     if compact { ring *= max(0, 1 - Self.rippleSpeed * age / Self.compactRadius) }
                     let core = d < 1 ? max(0, 1 - age / (Self.rippleLife * 0.5)) : 0
-                    best = best.maxed(r.color.scaled(max(ring, core) * fade * fade))
+                    let k = max(ring, core) * fade * fade
+                    if inverted { darkness = max(darkness, k) } else { best = best.maxed(r.color.scaled(k)) }
                 }
-                if best != .black { colors[key.id] = best }
+                if inverted {
+                    colors[key.id] = base.scaled(1 - darkness)
+                } else if best != .black {
+                    colors[key.id] = best
+                }
             }
 
         case .raindrop:

@@ -76,3 +76,8 @@ Fixed in v1.1.1. The firmware freezes when it receives several color changes in 
 (e.g. dragging the color picker), and the Bluetooth link times out. The app now spaces color changes at
 least 1.2 s apart, so the last color you pick may take about a second to apply. Details in
 [BLUETOOTH.md](BLUETOOTH.md#disconnect-investigation-2026-10-20-rapid-color-changes-freeze-the-firmware).
+
+### The 2.4G receiver keeps disconnecting while a Mac effect runs
+Fixed in 1.2.0: the app no longer sends the "fill" packet through the receiver, which made it reset.
+If anything similar happens, `~/Library/Logs/BA-KEY Menu.log` shows each connect, error and
+"HID devices changed" event with timestamps. Please attach it to a bug report.

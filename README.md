@@ -43,7 +43,7 @@ All of these are the same Dareu reference design, internally called **TK51G**, s
 | **Basike BA-KEY308** | ABNT2 | `0x0130` | ✅ tested (Bluetooth, USB); per-key LED map calibrated |
 | **Dareu EK75** | ANSI | `0x0101`, `0x0045` | 🧪 experimental: recognized, not tested yet; per-key LED map inferred |
 | **Husky Nomadic HTG200 / HTG500 / HTG800 V2** | ANSI | `0x0101` | 🧪 experimental (same hardware as the EK75) |
-| 2.4G receiver for the models above | n/a | `0x0042` | implemented, not tested yet |
+| 2.4G receiver for the models above | n/a | `0x0042` | ✅ tested with the BA-KEY308 |
 | Other Dareu keyboards with the same protocol (`FwType 0`): Z82 / Z82 PRO, A98, FK98, A87 PRO, EK87 PRO, A104, EK106 PRO, EK81 MAX, COOL 98, DK87 PRO, DK108 PRO, EK815 MAX, FLEX 75 | various | see [catalog](docs/DAREU-CATALOG.md) | ❔ probably work for effects; not recognized by the app yet; `bakey info` detects them, please report |
 | Newer EK75 revisions, CK75 PRO, Hall-effect "HE/RT" boards (`FwType` ≠ 0) | | | ❌ different protocol |
 
@@ -65,7 +65,8 @@ The `bakey info` command used for it is read-only.
     direction, brightness, an inline color mixer for any color, and a speed slider covering the firmware's full 1–255 range (the official
     app only uses 1–3).
   - **Mac effects**: effects drawn by the Mac, with full speed control:
-    - **Raindrop on key press**: ripples spread from the key you press.
+    - **Raindrop on key press**: ripples spread from the key you press, and an **inverted** version where
+      the lit keyboard goes dark under your keys.
     - Random Rain, Wave and Breathing.
   - **Side light**: off / static / breathing, color, brightness.
   - **Bluetooth batteries**: the battery of your mouse, headphones or any other Bluetooth device, with a
@@ -194,7 +195,7 @@ other models are welcome.
 |---|---|
 | Bluetooth LE | ✅ tested |
 | USB cable | ✅ tested (about 130× faster than Bluetooth for lighting) |
-| 2.4G receiver | implemented from the Windows code, **not tested yet** |
+| 2.4G receiver | ✅ tested (as fast as USB; see PROTOCOL.md §2.6) |
 | Dareu EK75 / Husky Nomadic | recognized since v1.1.0, **not tested yet** |
 | Lighting effects, color, speed, brightness, side light | ✅ |
 | Per-key colors, Mac effects, key-press Raindrop | ✅ |

@@ -50,6 +50,7 @@ final class KeyboardStore: ObservableObject {
     /// Frames per second the Mac effect is actually reaching (limited by the link).
     @Published private(set) var softFPS: Double = 0
     private var engineTask: Task<Void, Never>?
+    private var connectFailures = 0
     /// What the painter last sent; reset whenever something else draws on the keys.
     private var paintDiffer = FrameDiffer()
     private var keyMonitor: KeyPressMonitor?
@@ -91,6 +92,7 @@ final class KeyboardStore: ObservableObject {
         }
 
         monitor.onChange = { [weak self] in
+            AppLog.write("HID devices changed")
             Task { @MainActor in self?.scheduleReconnect() }
         }
         scheduleReconnect()
@@ -119,8 +121,12 @@ final class KeyboardStore: ObservableObject {
         stopEngine()
         paintDiffer.reset()
         status = .connecting
+        AppLog.write("connect: \(candidates.count) candidate(s): " + candidates.map { "\($0.name) [\($0.transport), PID \(String(format: "0x%04X", $0.productID)), rid \($0.reportID)]" }.joined(separator: ", "))
         do {
             info = try await worker.connect(to: candidates)
+            AppLog.write("connected: \(info?.name ?? "?") via \(info?.transport ?? "?") fw \(info?.firmware ?? "?")"
+                         + (connectFailures > 0 ? " after \(connectFailures) failed attempt(s)" : ""))
+            connectFailures = 0
             // The key layout (painter, presets, Mac effects) follows the connected model.
             KeyLayout.current = info.flatMap { KeyboardModel.forPID($0.pid) } ?? .baKey308
             try await loadAll()
@@ -136,6 +142,16 @@ final class KeyboardStore: ObservableObject {
             }
         } catch {
             status = .failed(error.localizedDescription)
+            // Retry on our own: e.g. switching the keyboard from Bluetooth to 2.4G removes the BLE device
+            // while the receiver, already plugged in, has no keyboard paired yet; or the keyboard sleeps
+            // behind the receiver. No HID event arrives when it comes back, so without this the app stayed
+            // "failed". Back off 3, 6, 10 s (capped at 10 s, so after waking the keyboard reconnects within seconds).
+            connectFailures += 1
+            let delay = min(3 * pow(2, Double(min(connectFailures - 1, 2))), 10)
+            if connectFailures <= 3 || connectFailures % 20 == 0 {
+                AppLog.write("connect failed (#\(connectFailures)): \(error.localizedDescription); retrying in \(Int(delay)) s")
+            }
+            debounce("connect", delay: delay) { [weak self] in await self?.reconnect() }
         }
     }
 
@@ -262,6 +278,7 @@ final class KeyboardStore: ObservableObject {
     private func startEngine() {
         stopEngine()
         guard let effect = softEffect, status == .connected else { return }
+        AppLog.write("engine start: \(effect.name)")
         if effect.isReactive { startKeyMonitor() }
         let profile = self.profile
         if var m = regions[.backlight] {
@@ -283,7 +300,12 @@ final class KeyboardStore: ObservableObject {
             // per packet) one row per iteration, most-changed first, so key presses show quickly.
             var differ = FrameDiffer()
             var secondsPerPacket = 0.0
+            var statFrames = 0, statPackets = 0, statStart = Date()
             while !Task.isCancelled, let self {
+                if -statStart.timeIntervalSinceNow >= 5 {
+                    AppLog.write(String(format: "engine: %d frames, %d packets in 5 s, %.1f ms/packet", statFrames, statPackets, secondsPerPacket * 1000))
+                    statFrames = 0; statPackets = 0; statStart = Date()
+                }
                 let now = Date()
                 for key in self.pendingPresses { renderer.press(key, color: self.softColor) }
                 self.pendingPresses.removeAll()
@@ -296,11 +318,13 @@ final class KeyboardStore: ObservableObject {
                     let sent = try await self.worker.run { kb -> [Packet] in
                         let packets = snapshot.plan(frame, reportID: kb.hid.reportID, target: kb.target,
                                                     maxPackets: slowLink ? 1 : .max,
-                                                    minScore: slowLink ? 120 : 1)
+                                                    minScore: slowLink ? 120 : 1,
+                                                    allowFill: kb.supportsFillPacket)
                         try kb.sendPackets(packets)
                         return packets
                     }
                     if !sent.isEmpty {
+                        statFrames += 1; statPackets += sent.count
                         differ.applied(sent, frame: frame)
                         let per = Date().timeIntervalSince(now) / Double(sent.count)
                         secondsPerPacket = secondsPerPacket == 0 ? per : secondsPerPacket * 0.8 + per * 0.2
@@ -319,7 +343,7 @@ final class KeyboardStore: ObservableObject {
     }
 
     private func stopEngine() {
-        if engineTask != nil { paintDiffer.reset() }
+        if engineTask != nil { paintDiffer.reset(); AppLog.write("engine stop") }
         engineTask?.cancel()
         engineTask = nil
         softFPS = 0
@@ -342,6 +366,7 @@ final class KeyboardStore: ObservableObject {
         }
         keyMonitor = m
         needsInputMonitoring = !(keyMonitor?.start() ?? false)
+        AppLog.write("key monitor: source \(String(describing: keyMonitor?.source)) \(keyMonitor?.lastFailure ?? "")")
         keyMonitorFailure = keyMonitor?.lastFailure
         keySourceNote = keyMonitor?.source == .eventTap
             ? "Using macOS key events (another app such as Karabiner has the keyboard), so other keyboards trigger ripples too."
@@ -424,7 +449,8 @@ final class KeyboardStore: ObservableObject {
                     if needsMode {
                         try kb.setEffect(EffectState(effect: LightingEffect.streamingID), region: LEDRegion.backlight.rawValue, profile: profile)
                     }
-                    let packets = snapshot.plan(frame, reportID: kb.hid.reportID, target: kb.target)
+                    let packets = snapshot.plan(frame, reportID: kb.hid.reportID, target: kb.target,
+                                                allowFill: kb.supportsFillPacket)
                     try kb.sendPackets(packets)
                     return packets
                 }
@@ -462,7 +488,15 @@ final class KeyboardStore: ObservableObject {
 
     private func report(_ error: Error) {
         lastError = error.localizedDescription
-        if case BAKeyError.noDevice = error { scheduleReconnect() }
+        AppLog.write("error: \(error.localizedDescription)")
+        // A vanished device, a dead handle or a keyboard that stopped answering (it slept or moved to
+        // another mode behind the receiver): reconnect instead of staying stuck.
+        switch error {
+        case BAKeyError.noDevice, BAKeyError.ioFailed, BAKeyError.timeout, BAKeyError.noKeyboardBehindReceiver:
+            scheduleReconnect()
+        default:
+            break
+        }
     }
 
     private func persistLayouts() {

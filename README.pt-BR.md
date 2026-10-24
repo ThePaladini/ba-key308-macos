@@ -43,7 +43,7 @@ Todos são o mesmo projeto de referência da Dareu, chamado internamente de **TK
 | **Basike BA-KEY308** | ABNT2 | `0x0130` | ✅ testado (Bluetooth, USB); mapa de LEDs por tecla calibrado |
 | **Dareu EK75** | ANSI | `0x0101`, `0x0045` | 🧪 experimental: reconhecido, ainda não testado; mapa de LEDs deduzido |
 | **Husky Nomadic HTG200 / HTG500 / HTG800 V2** (Kabum) | ANSI | `0x0101` | 🧪 experimental (mesmo hardware do EK75) |
-| Receptor 2.4G dos modelos acima | — | `0x0042` | implementado, ainda não testado |
+| Receptor 2.4G dos modelos acima | — | `0x0042` | ✅ testado com o BA-KEY308 |
 | Outros teclados Dareu com o mesmo protocolo (`FwType 0`): Z82 / Z82 PRO, A98, FK98, A87 PRO, EK87 PRO, A104, EK106 PRO, EK81 MAX, COOL 98, DK87 PRO, DK108 PRO, EK815 MAX, FLEX 75 | vários | ver [catálogo](docs/DAREU-CATALOG.md) | ❔ efeitos provavelmente funcionam; o app ainda não os reconhece; o `bakey info` detecta, mande um relato |
 | Revisões novas do EK75, CK75 PRO, teclados magnéticos "HE/RT" (`FwType` ≠ 0) | | | ❌ protocolo diferente |
 
@@ -63,7 +63,8 @@ O comando `bakey info` usado no relato só lê, não altera nada.
     ou o arco-íris do firmware), direção, brilho e um controle de velocidade que cobre toda a faixa do
     firmware, de 1 a 255 (o app oficial só usa de 1 a 3).
   - **Efeitos do Mac**: efeitos desenhados pelo Mac, com controle total de velocidade:
-    - **Gota de chuva ao apertar uma tecla**: uma onda se espalha a partir da tecla que você aperta.
+    - **Gota de chuva ao apertar uma tecla**: uma onda se espalha a partir da tecla que você aperta, e uma
+      versão **invertida**, em que o teclado aceso apaga sob as teclas.
     - Chuva aleatória, Onda e Respiração.
   - **Luz lateral**: desligada, fixa ou respiração, com cor e brilho.
   - **Baterias Bluetooth**: a bateria do mouse, dos fones ou de qualquer aparelho Bluetooth, com um
@@ -187,7 +188,7 @@ para outros modelos são bem-vindos.
 |---|---|
 | Bluetooth LE | ✅ testado |
 | Cabo USB | ✅ testado (cerca de 130× mais rápido que o Bluetooth para iluminação) |
-| Receptor 2.4G | implementado a partir do código do Windows, **ainda não testado** |
+| Receptor 2.4G | ✅ testado (tão rápido quanto o USB) |
 | Dareu EK75 / Husky Nomadic | reconhecidos desde a v1.1.0, **ainda não testados** |
 | Efeitos, cor, velocidade, brilho, luz lateral | ✅ |
 | Cores por tecla, efeitos do Mac, gota de chuva ao apertar | ✅ |

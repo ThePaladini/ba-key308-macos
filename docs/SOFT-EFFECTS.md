@@ -39,6 +39,7 @@ keyboard does the animating.
 | Effect | What it does | Speed 1.0× means |
 |---|---|---|
 | **Raindrop (Mac, on key press)** | Reactive, like the firmware Raindrop. The pressed key flashes, then a ring spreads outward (300 units/s ≈ 7.5 keys/s) and fades over 1.4 s. Random color per press, or one color | The ring speed and fade above |
+| **Raindrop inverted (Mac, on key press)** | The keyboard stays lit in the chosen color (white by default, made for white keycaps). The pressed key goes dark, and a ring of shadow spreads and fades while the light comes back | Same ring speed and fade as the normal Raindrop |
 | Rain (Mac, random) | Random keys light up and fade out (15% fade-in, 85% fade-out, 1.6 s life). Random colors or one color | About 5 new drops per second |
 | Wave (Mac) | Rainbow wave flowing across the keyboard, or a brightness wave in one color | One wavelength per 2.5 s |
 | Breathing (Mac) | Whole keyboard breathes; in rainbow mode the hue drifts slowly | One breath per 4 s |

@@ -125,13 +125,27 @@ Lists and names longer than one packet use this scheme:
 
 ✅ Verified for the profile list and the LED region list.
 
-### 2.6 Through the 2.4G receiver 📖
+### 2.6 Through the 2.4G receiver ✅ (tested 2026-10-24)
 
 1. Open the receiver (PID `0x0042`).
 2. GET class 0, command `0xA0` (wireless status) → `[7]` = N, then N groups of
    `{status, PID high, PID low}` starting at `[8]`.
 3. For the first slot `i` with status ≠ 0 and PID `0x0130`, set the target nibble: `[1] = (i+1) << 4`.
 4. Every other command is identical.
+
+Verified on the real receiver (PID `0x0042`, 12 Mb/s USB):
+
+- **Interface:** Consumer `0x0C`/`0x01`, 64-byte feature report, no report ID (descriptor
+  `050c0901a1010600ff09021500250175089540b101c0`). The receiver also exposes keyboard, mouse, consumer
+  and digitizer interfaces.
+- **The keyboard sits in slot 1:** requests use `[1] = 0x10` and replies carry `0x12` (slot 1 + READY).
+- **Speed is about the same as USB:** a GET round trip takes ~14 ms and a frame packet ~1 ms. Stress
+  results: 2091 effect writes, 2171 brightness writes, 5169 full frames and 2648 frames of per-row packets,
+  with 0 failures.
+- ⚠️ **A fill packet (`[8]=0x03`) resets the receiver.** It drops off USB about 3 s later and
+  re-enumerates. The app only uses fill packets over Bluetooth (`KeyboardClient.supportsFillPacket`).
+  Before this was known, every Mac effect with an all-one-color frame (Raindrop when idle, Breathing)
+  made the receiver reset in a loop, every ~3.4 s.
 
 ---
 

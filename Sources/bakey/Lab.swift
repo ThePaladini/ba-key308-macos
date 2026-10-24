@@ -42,6 +42,8 @@ enum Lab {
             print(String(format: "single row packet sent in %.0f ms", -t.timeIntervalSinceNow * 1000))
 
         case "fill":
+            // ⚠️ Through the 2.4G receiver this packet makes the receiver reset (see supportsFillPacket).
+            guard kb.supportsFillPacket else { print("Refusing: the fill packet resets the 2.4G receiver and isn't used over USB."); return }
             // One-packet fill: flags 0x03 with RGB in [9...11] (from SetLedFrameALL in the Windows app).
             try ensureStreaming()
             let c = RGB(hex: args.first ?? "00ff00") ?? RGB(0, 255, 0)
@@ -164,8 +166,21 @@ enum Stress {
                     if i == 0 { try kb.setEffect(EffectState(effect: LightingEffect.streamingID), region: region, profile: profile) }
                     let c = RGB(hue: Double(i % 12) / 12)
                     try kb.sendFrame([[RGB]](repeating: [RGB](repeating: c, count: KeyLayout.columns), count: KeyLayout.rows))
+                case "frames-check": // frames like a Mac effect, plus a round-trip read every 10 frames
+                    if i == 0 { try kb.setEffect(EffectState(effect: LightingEffect.streamingID), region: region, profile: profile) }
+                    let c = RGB(hue: Double(i % 12) / 12)
+                    try kb.sendFrame([[RGB]](repeating: [RGB](repeating: c, count: KeyLayout.columns), count: KeyLayout.rows))
+                    if i % 10 == 9 { _ = try kb.battery() }
+                case "rows-check":   // what the app's FrameDiffer sends: every row as its own committed packet
+                    if i == 0 { try kb.setEffect(EffectState(effect: LightingEffect.streamingID), region: region, profile: profile) }
+                    let c = RGB(hue: Double(i % 12) / 12)
+                    let row = [RGB](repeating: c, count: KeyLayout.columns)
+                    try kb.sendPackets((0..<KeyLayout.rows).map {
+                        PacketBuilder.rowPacket(reportID: kb.hid.reportID, target: kb.target, region: region, row: $0, colors: row)
+                    })
+                    if i % 10 == 9 { _ = try kb.battery() }
                 default:
-                    print("scenarios: read brightness effect speed color frames"); return
+                    print("scenarios: read brightness effect speed color frames frames-check rows-check mix two-regions"); return
                 }
                 ops += 1
                 latencies.append(-t0.timeIntervalSinceNow * 1000)

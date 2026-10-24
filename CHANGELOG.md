@@ -3,6 +3,11 @@
 ## 1.2.0 — unreleased
 
 **New**
+- **Raindrop inverted (Mac, on key press).** The opposite of the key-press Raindrop: the keyboard stays
+  lit (white by default, or any color from the mixer), and the key you press goes dark with a ring of shadow
+  spreading out. Made for white keycaps.
+- **Diagnostic log** at `~/Library/Logs/BA-KEY Menu.log`: connections, errors and Mac-effect stats.
+  It's useful when reporting a problem and never records key presses.
 - **Color mixer in the menu.** The 🎛 button next to the swatches opens a hue bar, an intensity bar
   (white → full color), a hex field and recent colors, right inside the panel. It replaces the system color
   panel, which closed the menu. Any of the 16.7 million colors the keyboard supports.
@@ -12,6 +17,12 @@
   (`system_profiler`), with no extra permission. See [docs/BATTERIES.md](docs/BATTERIES.md).
 
 **Fixed**
+- **2.4G receiver kept disconnecting with Mac effects.** A single "fill" packet (one color for the whole
+  keyboard, a Bluetooth speed-up) makes the receiver reset. Raindrop (Mac) and Breathing (Mac) sent it
+  whenever the keyboard was one color, so the receiver reset every few seconds. Fill packets are now used
+  only over Bluetooth. The 2.4G receiver is now tested (docs/PROTOCOL.md §2.6).
+- **Reconnects on its own** after a failed connection or when commands time out. Previously, switching
+  the keyboard from Bluetooth to 2.4G could leave the app stuck until it was restarted.
 - **Bluetooth still dropped on some keyboards when changing colors.** A second BA-KEY308 needed more
   room than v1.1.1 gave: color changes are now at least 2.5 s apart, other lighting changes wait 1 s after
   a color change, and colors are sent 1 s after you stop adjusting. Verified with 73 back-to-back writes,

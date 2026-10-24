@@ -65,10 +65,10 @@ public struct FrameDiffer {
     /// The packets to bring the keyboard to `frame`, at most `maxPackets` of them.
     public func plan(_ frame: [[RGB]], reportID: UInt8, target: UInt8 = 0,
                      region: UInt8 = LEDRegion.backlight.rawValue, maxPackets: Int = .max,
-                     minScore: Int = 1) -> [Packet] {
+                     minScore: Int = 1, allowFill: Bool = true) -> [Packet] {
         let dirty = dirtyRows(frame, minScore: minScore)
         guard !dirty.isEmpty else { return [] }
-        if dirty.count > 1, let c = Self.uniformColor(frame) {
+        if allowFill, dirty.count > 1, let c = Self.uniformColor(frame) {
             return [PacketBuilder.fillPacket(reportID: reportID, target: target, region: region, color: c)]
         }
         return dirty.prefix(maxPackets).map {
@@ -89,7 +89,8 @@ public struct FrameDiffer {
     /// Plans, sends and records. Returns the number of packets sent.
     @discardableResult
     public mutating func push(_ frame: [[RGB]], via kb: KeyboardClient, maxPackets: Int = .max) throws -> Int {
-        let packets = plan(frame, reportID: kb.hid.reportID, target: kb.target, maxPackets: maxPackets)
+        let packets = plan(frame, reportID: kb.hid.reportID, target: kb.target, maxPackets: maxPackets,
+                           allowFill: kb.supportsFillPacket)
         guard !packets.isEmpty else { return 0 }
         try kb.sendPackets(packets)
         applied(packets, frame: frame)
