@@ -62,7 +62,7 @@ The `bakey info` command used for it is read-only.
 - **Menu bar panel**
   - Connection type, firmware version, battery level (optionally in the menu bar).
   - **Backlight**: all 19 hardware effects, color (swatches, color picker or the firmware rainbow),
-    direction, brightness, and a speed slider covering the firmware's full 1–255 range (the official
+    direction, brightness, an inline color mixer for any color, and a speed slider covering the firmware's full 1–255 range (the official
     app only uses 1–3).
   - **Mac effects**: effects drawn by the Mac, with full speed control:
     - **Raindrop on key press**: ripples spread from the key you press.

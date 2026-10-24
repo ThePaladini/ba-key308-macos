@@ -111,3 +111,24 @@ overwhelms it.
 the previous one for that region waits until 1.2 s have passed. In the app, color changes are also
 debounced for 0.5 s, so a color-picker drag sends only where it stops. Per-key frames (effect 18) are
 RAM-only and unaffected: 45 back-to-back frames, 0 drops.
+
+### Follow-up (2026-10-24): 1.2 s wasn't enough on a second keyboard
+
+A second BA-KEY308 (white, same firmware 0.0.3) dropped the link while the user tried the new inline
+color mixer. Stress tests on that unit:
+
+| Color writes on the backlight | Writes | Link drops |
+|---|---|---|
+| ~1.6 s apart (the v1.1.1 spacing + write time) | 8, then dropped | 1 |
+| ~1.7 s apart | 58 | 0 |
+| ~4.2 s apart | 34 | 0 |
+| Alternating backlight ↔ side light, ~0.8 s | 92 | 0 |
+
+The cause is the rate of writes to one region, not their total count, and the threshold (~1.6–1.7 s)
+varies per unit. v1.1.1 sat right at the edge. Changes:
+
+- `colorWriteSpacing` **2.5 s** (≈ 2.9 s per write), well clear of the threshold.
+- `quietAfterColor` **1.0 s**: brightness and non-color effect writes wait 1 s after a color change.
+- The app debounces color changes for **1.0 s**, so several mixer drags or swatch clicks become one write.
+
+Verified on the white unit: 42 back-to-back color writes and 31 color-then-brightness pairs, 0 drops.

@@ -1,12 +1,21 @@
 # Changelog
 
-## 1.2.0 — 2026-10-20
+## 1.2.0 — unreleased
 
 **New**
+- **Color mixer in the menu.** The 🎛 button next to the swatches opens a hue bar, an intensity bar
+  (white → full color), a hex field and recent colors, right inside the panel. It replaces the system color
+  panel, which closed the menu. Any of the 16.7 million colors the keyboard supports.
 - **Bluetooth batteries.** A new menu section shows the battery of every connected Bluetooth device
   (mice, headphones, AirPods with each earbud and the case, controllers), any brand. Pin a device to show
   its level next to the menu bar icon; mice are pinned automatically. Reads what macOS already collects
   (`system_profiler`), with no extra permission. See [docs/BATTERIES.md](docs/BATTERIES.md).
+
+**Fixed**
+- **Bluetooth still dropped on some keyboards when changing colors.** A second BA-KEY308 needed more
+  room than v1.1.1 gave: color changes are now at least 2.5 s apart, other lighting changes wait 1 s after
+  a color change, and colors are sent 1 s after you stop adjusting. Verified with 73 back-to-back writes,
+  0 drops (docs/BLUETOOTH.md).
 
 
 ## 1.1.1 — 2026-10-20

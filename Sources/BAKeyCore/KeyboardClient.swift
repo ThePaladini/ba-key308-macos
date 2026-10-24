@@ -61,8 +61,22 @@ public final class KeyboardClient {
     /// acknowledging and macOS drops the link with a supervision timeout (reason 708), then the keyboard
     /// reconnects by itself. The same writes 1 s apart survived 41/41; brightness, effect and speed changes
     /// back to back survived 100+ each. See docs/BLUETOOTH.md.
-    public static let colorWriteSpacing: TimeInterval = 1.2
+    ///
+    /// 2026-10-24, second BA-KEY308 (white): 1.2 s was not enough. Color writes ~1.6 s apart dropped the
+    /// link after 8; ~1.7 s apart survived 58 and ~4.2 s survived 34. It's rate-dependent, with a
+    /// threshold around 1.6-1.7 s that varies per unit, so the gap is now 2.5 s (~2.9 s per write).
+    public static let colorWriteSpacing: TimeInterval = 2.5
+    /// Any other lighting write waits this long after a color change (e.g. the brightness slider right
+    /// after picking a color), so the firmware has finished applying the color.
+    public static let quietAfterColor: TimeInterval = 1.0
     private var lastColorWrite: [UInt8: (time: Date, colors: [RGB])] = [:]
+    private var lastAnyColorWrite: Date?
+
+    private func waitAfterColorWrite() {
+        guard let t = lastAnyColorWrite else { return }
+        let wait = Self.quietAfterColor + t.timeIntervalSinceNow
+        if wait > 0 { Thread.sleep(forTimeInterval: wait) }
+    }
 
     /// SET commands this client is allowed to send. Everything else must be a GET.
     /// This is the second safety layer after `CommandClass` (see docs/SAFETY.md).
@@ -215,14 +229,20 @@ public final class KeyboardClient {
 
     public func setEffect(_ s: EffectState, region: UInt8, profile: UInt8) throws {
         let colors = Array(s.colors.prefix(5))
-        if !colors.isEmpty, let last = lastColorWrite[region], last.colors != colors {
+        let changesColor = !colors.isEmpty && lastColorWrite[region]?.colors != colors
+        if changesColor, let last = lastColorWrite[region] {
             let wait = Self.colorWriteSpacing + last.time.timeIntervalSinceNow
             if wait > 0 {
                 log?(String(format: "(waiting %.2f s between color changes)", wait))
                 Thread.sleep(forTimeInterval: wait)
             }
+        } else {
+            waitAfterColorWrite()
         }
-        defer { if !colors.isEmpty { lastColorWrite[region] = (Date(), colors) } }
+        defer {
+            if !colors.isEmpty { lastColorWrite[region] = (Date(), colors) }
+            if changesColor { lastAnyColorWrite = Date() }
+        }
         // The firmware acknowledges but ignores a write with speed 0.
         let speed = min(max(s.speed, speedRange.lowerBound), speedRange.upperBound)
         let payload = [region, s.effect, s.flag, speed, UInt8(colors.count)] + colors.flatMap(\.bytes)
@@ -239,6 +259,7 @@ public final class KeyboardClient {
     }
 
     public func setBrightness(_ level: UInt8, region: UInt8, profile: UInt8) throws {
+        waitAfterColorWrite()
         try transact(.lighting, 0x03, profile: profile, payload: [region, level])
     }
 

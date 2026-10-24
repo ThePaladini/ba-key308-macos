@@ -151,6 +151,12 @@ enum Stress {
                 case "color-back":   // same, on the backlight
                     try kb.setEffect(EffectState(effect: 1, colors: [RGB(hue: Double(i % 24) / 24)]),
                                      region: region, profile: profile)
+                case "mix":          // mixer: a new color, then the brightness slider right after
+                    try kb.setEffect(EffectState(effect: 1, colors: [RGB(hue: Double(i % 24) / 24)]), region: region, profile: profile)
+                    try kb.setBrightness(i % 2 == 0 ? 190 : 255, region: region, profile: profile)
+                case "two-regions":  // mixer on the backlight, then on the side light
+                    let c = [RGB(hue: Double(i % 24) / 24)]
+                    try kb.setEffect(EffectState(effect: 1, colors: c), region: i % 2 == 0 ? region : LEDRegion.sidelight.rawValue, profile: profile)
                 case "side-toggle":  // side light effect changes, fixed color
                     try kb.setEffect(EffectState(effect: i % 2 == 0 ? 1 : 2, speed: 2, colors: [.white]),
                                      region: LEDRegion.sidelight.rawValue, profile: profile)

@@ -191,9 +191,10 @@ final class KeyboardStore: ObservableObject {
         guard var m = regions[region] else { return }
         m.state.colors = color.map { [$0] } ?? []
         regions[region] = m
-        // Longer debounce: a color-picker drag should send only where it stops. Rapid color writes
-        // freeze the firmware and drop Bluetooth (see KeyboardClient.colorWriteSpacing).
-        pushEffect(region, delay: 0.5)
+        // Send only once the color settles: several quick adjustments (mixer drags, swatch clicks)
+        // become one write. Rapid color writes freeze the firmware and drop Bluetooth
+        // (see KeyboardClient.colorWriteSpacing).
+        pushEffect(region, delay: 1.0)
     }
 
     func setSpeed(_ speed: Double, for region: LEDRegion) {

@@ -311,33 +311,42 @@ struct SwatchRow: View {
         RGB(0, 120, 255), RGB(0, 0, 255), RGB(160, 0, 255), RGB(255, 0, 140), RGB(255, 255, 255),
     ]
 
+    @State private var showMixer = false
+
     var body: some View {
-        HStack(spacing: 5) {
-            if allowsRainbow {
-                Button { onSelect(nil) } label: {
-                    Circle()
-                        .fill(AngularGradient(colors: [.red, .yellow, .green, .cyan, .blue, .purple, .red], center: .center))
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 5) {
+                if allowsRainbow {
+                    Button { onSelect(nil) } label: {
+                        Circle()
+                            .fill(AngularGradient(colors: [.red, .yellow, .green, .cyan, .blue, .purple, .red], center: .center))
+                            .frame(width: 18, height: 18)
+                            .overlay(Circle().stroke(Color.primary, lineWidth: selected == nil ? 2 : 0).padding(-2))
+                    }
+                    .buttonStyle(.plain)
+                    .help("Default colors (rainbow)")
+                }
+                ForEach(Self.colors, id: \.self) { c in
+                    Button { onSelect(c) } label: {
+                        Circle()
+                            .fill(c.color)
+                            .frame(width: 18, height: 18)
+                            .overlay(Circle().stroke(Color.primary.opacity(0.25), lineWidth: 0.5))
+                            .overlay(Circle().stroke(Color.primary, lineWidth: selected == c ? 2 : 0).padding(-2))
+                    }
+                    .buttonStyle(.plain)
+                    .help("#\(c.hex)")
+                }
+                Button { showMixer.toggle() } label: {
+                    Image(systemName: showMixer ? "chevron.up.circle.fill" : "slider.horizontal.3")
                         .frame(width: 18, height: 18)
-                        .overlay(Circle().stroke(Color.primary, lineWidth: selected == nil ? 2 : 0).padding(-2))
                 }
                 .buttonStyle(.plain)
-                .help("Default colors (rainbow)")
+                .help("Mix any color")
             }
-            ForEach(Self.colors, id: \.self) { c in
-                Button { onSelect(c) } label: {
-                    Circle()
-                        .fill(c.color)
-                        .frame(width: 18, height: 18)
-                        .overlay(Circle().stroke(Color.primary.opacity(0.25), lineWidth: 0.5))
-                        .overlay(Circle().stroke(Color.primary, lineWidth: selected == c ? 2 : 0).padding(-2))
-                }
-                .buttonStyle(.plain)
-                .help("#\(c.hex)")
+            if showMixer {
+                ColorMixer(initial: selected, onCommit: { onSelect($0) })
             }
-            ColorPicker("", selection: Binding(get: { selected?.color ?? .white }, set: { onSelect(RGB($0)) }),
-                        supportsOpacity: false)
-                .labelsHidden()
-                .help("Custom color")
         }
     }
 }
