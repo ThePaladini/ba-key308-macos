@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.2.1 — unreleased
+
+**Fixed**
+- **High energy use with a key-press Mac effect.** Raindrop (Mac) and Raindrop inverted redrew the keyboard
+  30 times a second even with nothing to animate, and refreshed the menu bar item each time, so Activity
+  Monitor showed a very high energy impact. The engine now sleeps until a key is pressed (idle CPU ~0%), and
+  the panel and menu bar only redraw when the "updates/s" value changes.
+
+
 ## 1.2.0 — 2026-10-25
 
 **New**

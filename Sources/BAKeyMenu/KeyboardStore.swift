@@ -52,6 +52,8 @@ final class KeyboardStore: ObservableObject {
     /// Frames per second the Mac effect is actually reaching (limited by the link).
     @Published private(set) var softFPS: Double = 0
     private var engineTask: Task<Void, Never>?
+    /// The engine parks here while a key-press effect has nothing to animate; a key press or a colour change resumes it.
+    private var engineWaiter: CheckedContinuation<Void, Never>?
     private var connectFailures = 0
     /// What the painter last sent; reset whenever something else draws on the keys.
     private var paintDiffer = FrameDiffer()
@@ -349,6 +351,12 @@ final class KeyboardStore: ObservableObject {
     func setSoftColor(_ color: RGB?) {
         softColor = color
         defaults.set(color?.hex, forKey: Keys.softColor)
+        wakeEngine()
+    }
+
+    private func wakeEngine() {
+        engineWaiter?.resume()
+        engineWaiter = nil
     }
 
     /// Render loop: draws a frame, sends it, repeats. Sending is awaited, so the loop runs as
@@ -391,9 +399,10 @@ final class KeyboardStore: ObservableObject {
                 renderer.compact = slowLink
                 let frame = renderer.frame(dt: now.timeIntervalSince(last), speed: self.softSpeed, color: self.softColor)
                 last = now
+                var sent: [Packet] = []
                 do {
                     let snapshot = differ
-                    let sent = try await self.worker.run { kb -> [Packet] in
+                    sent = try await self.worker.run { kb -> [Packet] in
                         let packets = snapshot.plan(frame, reportID: kb.hid.reportID, target: kb.target,
                                                     maxPackets: slowLink ? 1 : .max,
                                                     minScore: slowLink ? 120 : 1,
@@ -413,7 +422,19 @@ final class KeyboardStore: ObservableObject {
                     return
                 }
                 fpsWindow.removeAll { $0.timeIntervalSinceNow < -3 }
-                self.softFPS = Double(fpsWindow.count) / 3
+                // softFPS is @Published: every assignment redraws the panel and the menu bar item, so only on change.
+                let fps = (Double(fpsWindow.count) / 3).rounded()
+                if fps != self.softFPS { self.softFPS = fps }
+                // A key-press effect with nothing left to animate: sleep until a key is pressed (or the colour
+                // changes) instead of rendering identical frames 30 times a second. This kept the CPU busy for
+                // hours (Activity Monitor, 2026-10-25: energy impact ~1000 while idle).
+                if renderer.isIdle, sent.isEmpty, self.pendingPresses.isEmpty {
+                    if self.softFPS != 0 { self.softFPS = 0 }
+                    fpsWindow.removeAll()
+                    await withCheckedContinuation { self.engineWaiter = $0 }
+                    last = Date()
+                    continue
+                }
                 let spent = Date().timeIntervalSince(now)
                 if spent < 1.0 / 30 { try? await Task.sleep(nanoseconds: UInt64((1.0 / 30 - spent) * 1e9)) }
             }
@@ -424,6 +445,7 @@ final class KeyboardStore: ObservableObject {
         if engineTask != nil { paintDiffer.reset(); AppLog.write("engine stop") }
         engineTask?.cancel()
         engineTask = nil
+        wakeEngine() // a parked loop wakes, sees the cancellation and ends
         softFPS = 0
         keyMonitor?.stop()
         pendingPresses.removeAll()
@@ -440,6 +462,7 @@ final class KeyboardStore: ObservableObject {
             Task { @MainActor in
                 guard let self, let key = SoftRenderer.keyForUsage[usage] else { return }
                 self.pendingPresses.append(key)
+                self.wakeEngine()
             }
         }
         keyMonitor = m
