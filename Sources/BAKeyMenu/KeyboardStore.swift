@@ -68,6 +68,9 @@ final class KeyboardStore: ObservableObject {
     private var debouncers: [String: Task<Void, Never>] = [:]
     private var frameDirty = false
     private var batteryTimer: Timer?
+    /// Over the 2.4G receiver no HID event marks the keyboard sleeping or waking, so the receiver is asked.
+    private var receiverTimer: Timer?
+    private var keyboardAwake = true
 
     private enum Keys {
         static let colors = "keyColors"
@@ -111,6 +114,8 @@ final class KeyboardStore: ObservableObject {
     }
 
     func reconnect() async {
+        receiverTimer?.invalidate()
+        receiverTimer = nil
         let candidates = monitor.candidates()
         guard !candidates.isEmpty else {
             stopEngine()
@@ -134,6 +139,13 @@ final class KeyboardStore: ObservableObject {
             try await loadAll()
             status = .connected
             lastError = nil
+            if info?.viaReceiver == true {
+                keyboardAwake = true
+                reapplyAfterWake()
+                receiverTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { [weak self] _ in
+                    Task { @MainActor in await self?.checkKeyboardAwake() }
+                }
+            }
             let streaming = regions[.backlight]?.state.effect == LightingEffect.streamingID
             if streaming, softEffect != nil {
                 startEngine()
@@ -180,8 +192,40 @@ final class KeyboardStore: ObservableObject {
     }
 
     func refreshBattery() async {
-        guard status == .connected else { return }
+        guard status == .connected, keyboardAwake else { return }
         if let b = try? await worker.run({ try $0.battery() }) { battery = b }
+    }
+
+    /// Over the 2.4G receiver, a keyboard that wakes from sleep lights its side light again even when the
+    /// stored effect (and what it reports) is Off, and it ignores a write identical to the stored one
+    /// (tested 2026-10-25; docs/PROTOCOL.md). Bluetooth isn't affected. Re-send the side light as two
+    /// writes, the first with a different speed byte, so the second (the real state) is applied.
+    private func reapplyAfterWake() {
+        guard let side = regions[.sidelight]?.state else { return }
+        var nudge = side
+        nudge.speed = side.speed == 3 ? 2 : 3
+        let profile = self.profile
+        Task {
+            do {
+                try await worker.run { kb in
+                    try kb.setEffect(nudge, region: LEDRegion.sidelight.rawValue, profile: profile)
+                    try kb.setEffect(side, region: LEDRegion.sidelight.rawValue, profile: profile)
+                }
+                AppLog.write("side light re-applied (\(LightingEffect(id: side.effect).name))")
+            } catch { report(error) }
+        }
+    }
+
+    private func checkKeyboardAwake() async {
+        guard status == .connected, info?.viaReceiver == true,
+              let awake = try? await worker.run({ try $0.keyboardAwakeBehindReceiver() }) else { return }
+        guard awake != keyboardAwake else { return }
+        keyboardAwake = awake
+        AppLog.write(awake ? "keyboard woke (2.4G)" : "keyboard asleep (2.4G)")
+        if awake {
+            reapplyAfterWake()
+            await refreshBattery()
+        }
     }
 
     func refresh() {

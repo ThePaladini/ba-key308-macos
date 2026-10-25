@@ -77,6 +77,11 @@ Fixed in v1.1.1. The firmware freezes when it receives several color changes in 
 least 1.2 s apart, so the last color you pick may take about a second to apply. Details in
 [BLUETOOTH.md](BLUETOOTH.md#disconnect-investigation-2026-10-20-rapid-color-changes-freeze-the-firmware).
 
+### Over 2.4G, the side light turns back on after the keyboard wakes
+Fixed in 1.2.0. The keyboard relights the side light when it wakes behind the receiver, even when it's set to
+Off. The app now notices the wake (within ~3 s) and sends the side light setting again. Over Bluetooth this
+never happened.
+
 ### The 2.4G receiver keeps disconnecting while a Mac effect runs
 Fixed in 1.2.0: the app no longer sends the "fill" packet through the receiver, which made it reset.
 If anything similar happens, `~/Library/Logs/BA-KEY Menu.log` shows each connect, error and

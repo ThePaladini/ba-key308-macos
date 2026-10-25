@@ -21,6 +21,12 @@
   (`system_profiler`), with no extra permission. See [docs/BATTERIES.md](docs/BATTERIES.md).
 
 **Fixed**
+- **Side light turned back on after the keyboard woke up (2.4G receiver).** The keyboard relights it
+  even when it's set to Off, still reports Off, and ignores a repeat of the same setting. The app now asks
+  the receiver every 3 s whether the keyboard is awake and, when it wakes (or the app connects), sends the
+  side light again in a way the keyboard applies. Bluetooth wasn't affected.
+- **No more "Keyboard did not answer" errors while the keyboard sleeps behind the receiver:** the battery
+  isn't read then.
 - **2.4G receiver kept disconnecting with Mac effects.** A single "fill" packet (one color for the whole
   keyboard, a Bluetooth speed-up) makes the receiver reset. Raindrop (Mac) and Breathing (Mac) sent it
   whenever the keyboard was one color, so the receiver reset every few seconds. Fill packets are now used

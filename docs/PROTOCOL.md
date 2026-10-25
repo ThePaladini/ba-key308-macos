@@ -146,6 +146,15 @@ Verified on the real receiver (PID `0x0042`, 12 Mb/s USB):
   re-enumerates. The app only uses fill packets over Bluetooth (`KeyboardClient.supportsFillPacket`).
   Before this was known, every Mac effect with an all-one-color frame (Raindrop when idle, Breathing)
   made the receiver reset in a loop, every ~3.4 s.
+- **Sleep and wake are invisible to macOS.** The receiver stays on USB, so no HID event arrives when the
+  keyboard behind it sleeps or wakes. Its slot status in `0xA0` reads 0 while the keyboard sleeps and ≠ 0 when
+  it's awake; the receiver answers this while the keyboard sleeps and the query doesn't wake it (2026-10-25).
+  The app polls it every 3 s (`KeyboardClient.keyboardAwakeBehindReceiver`).
+- ⚠️ **After waking over 2.4G, the side light comes back on even when it's set to Off,** and it still
+  reports Off. Bluetooth isn't affected. A write identical to the stored state is ignored (Off again does
+  nothing); a write that differs is applied (Off with speed 3 turned it off). Fix in the app: on every wake
+  and connect through the receiver, send the side light twice, first with a different speed byte, then the
+  real state (2026-10-25, reproduced with a 1-min sleep time, verified by eye).
 
 ---
 
@@ -164,7 +173,7 @@ Verified on the real receiver (PID `0x0042`, 12 Mb/s USB):
 | `0x86` | GET | | `[7..12]` MID | 📖 |
 | `0x87` | GET | multi-packet | device name | 📖 |
 | `0x90` | GET | | receiver firmware version | 📖 |
-| `0xA0` | GET | | wireless slots (§2.6) | 📖 |
+| `0xA0` | GET | | wireless slots: `[7]` N, then N × {status, PID} (§2.6); status 0 = keyboard asleep or absent | ✅ |
 | `0xA2` | GET | | RF protocol version | 📖 |
 | `0xA7` | GET | | `[7]` device color | 📖 |
 | `0x02` | SET | | serial number | ⚠️ identity |

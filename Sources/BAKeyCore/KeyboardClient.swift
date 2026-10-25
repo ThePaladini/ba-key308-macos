@@ -175,6 +175,19 @@ public final class KeyboardClient {
         throw BAKeyError.noKeyboardBehindReceiver
     }
 
+    /// Whether the keyboard is awake behind the 2.4G receiver. Asks the receiver itself for its paired-keyboard
+    /// list (class 0 cmd 0xA0): a sleeping keyboard's slot reads 0. The receiver answers while the keyboard
+    /// sleeps, and the question doesn't wake it. Always true when not connected through a receiver.
+    public func keyboardAwakeBehindReceiver() throws -> Bool {
+        guard hid.isReceiver, target != 0 else { return true }
+        let keyboardTarget = target
+        target = 0
+        defer { target = keyboardTarget }
+        let r = try transact(.device, 0xA0)
+        let base = 8 + (Int(keyboardTarget >> 4) - 1) * 3
+        return base < r.bytes.count && r[base] != 0
+    }
+
     // MARK: - Device
 
     public func info() throws -> DeviceInfo {
