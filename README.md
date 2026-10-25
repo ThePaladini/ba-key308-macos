@@ -71,10 +71,12 @@ The `bakey info` command used for it is read-only.
   - **Side light**: off / static / breathing, color, brightness.
   - **Bluetooth batteries**: the battery of your mouse, headphones or any other Bluetooth device, with a
     pin to show it next to the menu bar icon ([docs/BATTERIES.md](docs/BATTERIES.md)).
+  - **Sleep time**: how long the keyboard waits, idle, before it turns off its lights and disconnects
+    (1–40 minutes or never; the Windows app only offers it on the 2.4G receiver).
   - Launch at login.
 - **Key Painter**: click or drag to color individual keys. Includes an eyedropper, fill, built-in
   layouts (WASD, arrows, rainbow…) and saved layouts. Colors are re-sent when the keyboard reconnects.
-- **`bakey` CLI**: `bakey info`, `bakey effect back wave --speed 3`, `bakey keys W=ff0000 A=ff0000 …`,
+- **`bakey` CLI**: `bakey info`, `bakey effect back wave --speed 3`, `bakey sleep 10`, `bakey keys W=ff0000 A=ff0000 …`,
   raw read-only queries, benchmarks.
 
 Keyboard effects are stored **on the keyboard** and keep working on any computer without the app.

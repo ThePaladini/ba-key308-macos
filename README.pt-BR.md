@@ -69,12 +69,14 @@ O comando `bakey info` usado no relato só lê, não altera nada.
   - **Luz lateral**: desligada, fixa ou respiração, com cor e brilho.
   - **Baterias Bluetooth**: a bateria do mouse, dos fones ou de qualquer aparelho Bluetooth, com um
     alfinete para mostrar ao lado do ícone na barra de menus.
+  - **Tempo para dormir**: quanto tempo o teclado espera, parado, antes de apagar as luzes e desconectar
+    (de 1 a 40 minutos ou nunca; o app do Windows só oferece isso pelo receptor 2.4G).
   - Abrir ao iniciar sessão.
 - **Pintor de teclas**: clique ou arraste para colorir cada tecla. Tem conta-gotas, preenchimento,
   layouts prontos (WASD, setas, arco-íris…) e layouts salvos. As cores são reenviadas quando o teclado
   reconecta.
 - **Linha de comando `bakey`**: `bakey showcase` (show de luzes cronometrado para filmar), `bakey info`, `bakey effect back wave --speed 3`,
-  `bakey keys W=ff0000 A=ff0000 …`, consultas brutas só de leitura, testes de velocidade.
+  `bakey sleep 10`, `bakey keys W=ff0000 A=ff0000 …`, consultas brutas só de leitura, testes de velocidade.
 
 Os efeitos do teclado ficam **gravados no próprio teclado** e continuam funcionando em qualquer
 computador, mesmo sem o app.

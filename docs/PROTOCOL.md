@@ -291,9 +291,20 @@ Macros are not synced over the wireless receiver.
 |---|---|---|---|---|
 | `0x80` | GET | `[2]=4` | `[7]` status (0 discharging, 1 charging, 2 full), `[8]` level %, `[9]` max, `[10]` critical | ✅ → `00 64 64` = 100% |
 | `0x81`/`0x01` | GET/SET | | `[7..8]` seconds until the backlight dims | 📖 |
-| `0x82` | GET | | `[7]` enabled, `[8..9]` seconds until the backlight turns off | ✅ → `01 00 B4` = 180 s |
-| `0x02` | SET | `[7]` enable, `[8..9]` seconds | | 📖 |
+| `0x82` | GET | `[2]=3`, `[5]` profile | `[7]` enabled, `[8..9]` idle seconds before the keyboard sleeps | ✅ → `01 00 B4` = 180 s (factory) |
+| `0x02` | SET | `[2]=3`, `[5]` profile, `[7]` enable (0 = never), `[8..9]` seconds | | ✅ see below |
 | `0x83`–`0x85` | | | low-battery indicator, battery max LED level, ADC | 📖 |
+
+**Sleep time** ✅ (2026-10-25, BA-KEY308 on the 2.4G receiver). This is the Windows app's "Sleep time"
+(`SetBatteryTimeToSleep`): it offers 1, 3, 5, 10, 20, 30, 40 minutes or never, and shows the setting only for the
+wireless product (`TK51G_0130WL.IsSupportSleepTimeChange`); the command is the same on every link. When the time
+runs out with no key pressed, the backlight goes off and the keyboard drops the wireless link (the receiver then
+reports no keyboard) until a key is pressed. HID requests from the host do not count as activity. Measured: set to
+1 min, the keyboard was gone from the receiver between 71 and 81 s later; the factory 3 min is what made it vanish
+during long sessions. Writes of 1, 3, 10, 40 min and 0 read back exactly. **After the SET the keyboard ignores
+requests for a moment** (probably saving the setting): a GET sent right after never gets an answer, one sent 0.5 s
+later does, so `setSleepSeconds` waits 0.6 s. With one profile, GET answers the same
+for profile 0 and 1.
 
 ### Asynchronous notifications 📖
 
@@ -368,4 +379,6 @@ SET static red    → 07 00 08 03 02 01 00 01 01 00 00 01 FF 00 00
 GET LED attrs 1   ← 07 02 19 03 81 00 00 01 04 21 06 0F 13 01 02 05 0B 04 09 06 03 0A 14 15 16 1A 18 19 1B 1C 1D 12
 GET profile list  ← 07 02 01 05 80 06 00 01 00 01
 GET sleep         ← 07 02 03 07 82 00 00 01 00 B4             (180 s)
+SET sleep 10 min  → 00 10 03 07 02 01 00 01 02 58             (2.4G: report ID 0; 0x0258 = 600 s)
+                  ← 00 12 01 07 02 01 00 01
 ```

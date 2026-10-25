@@ -28,6 +28,8 @@ final class KeyboardStore: ObservableObject {
     @Published private(set) var status: Status = .searching
     @Published private(set) var info: DeviceInfo?
     @Published private(set) var battery: BatteryState?
+    /// Idle seconds before the keyboard sleeps (0 = never); nil if the keyboard doesn't report it.
+    @Published private(set) var sleepSeconds: Int?
     @Published private(set) var profiles: [UInt8] = [1]
     @Published private(set) var profile: UInt8 = 1
     @Published private(set) var regions: [LEDRegion: RegionModel] = [:]
@@ -157,10 +159,11 @@ final class KeyboardStore: ObservableObject {
 
     /// Reads everything the UI shows from the keyboard.
     func loadAll() async throws {
-        let snapshot = try await worker.run { kb -> (UInt8, [UInt8], BatteryState?, [LEDRegion: RegionModel]) in
+        let snapshot = try await worker.run { kb -> (UInt8, [UInt8], BatteryState?, Int?, [LEDRegion: RegionModel]) in
             let profile = try kb.activeProfile()
             let profiles = (try? kb.profileIDs()) ?? [profile]
             let battery = try? kb.battery()
+            let sleep = try? kb.sleepSeconds(profile: profile)
             var regions: [LEDRegion: RegionModel] = [:]
             for region in LEDRegion.allCases {
                 guard let attrs = try? kb.ledAttributes(region.rawValue) else { continue }
@@ -170,9 +173,9 @@ final class KeyboardStore: ObservableObject {
                 m.brightness = Double(try kb.brightness(region: region.rawValue)) / 2.55
                 regions[region] = m
             }
-            return (profile, profiles, battery, regions)
+            return (profile, profiles, battery, sleep, regions)
         }
-        (profile, profiles, battery, regions) = snapshot
+        (profile, profiles, battery, sleepSeconds, regions) = snapshot
         if profiles.isEmpty { profiles = [profile] }
     }
 
@@ -237,6 +240,22 @@ final class KeyboardStore: ObservableObject {
             do {
                 try await self?.worker.run { try $0.setBrightness(level, region: region.rawValue, profile: profile) }
             } catch { self?.report(error) }
+        }
+    }
+
+    /// Sleep time in minutes, 0 = never. Stored on the keyboard (per profile).
+    func setSleep(minutes: Int) {
+        let previous = sleepSeconds
+        sleepSeconds = minutes * 60
+        let profile = self.profile
+        Task {
+            do {
+                try await worker.run { try $0.setSleepSeconds(minutes * 60, profile: profile) }
+                sleepSeconds = try await worker.run { try $0.sleepSeconds(profile: profile) }
+            } catch {
+                sleepSeconds = previous
+                report(error)
+            }
         }
     }
 

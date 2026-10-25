@@ -40,12 +40,13 @@ can send them. This project is designed so that it cannot send them, even by mis
    | 3 | `0x03` | brightness |
    | 3 | `0x04` | per-key frame |
    | 5 | `0x03` | active profile |
+   | 7 | `0x02` | sleep time (idle minutes before the keyboard sleeps; added in 1.2.0) |
 
    Everything else must be a GET (bit 7 set), which only reads.
 3. **Unit tests** (`SafetyTests`) fail if either guard is loosened by accident.
 4. **The CLI's raw `get` command** only accepts commands with bit 7 set.
 
-To add a feature that needs another SET (key remapping, macros, sleep time), add it to `allowedSets`
+To add a feature that needs another SET (key remapping, macros), add it to `allowedSets`
 deliberately, with a comment, after checking its byte layout in [PROTOCOL.md](PROTOCOL.md).
 
 ## What has actually been written to the keyboard
@@ -54,6 +55,9 @@ During development on 2026-10-19, only these SET commands were sent:
 
 - class 3 `0x02` (effect): static red, Raindrop, effect 18. Raindrop was always restored afterwards.
 - class 3 `0x04` (frames): test patterns.
+
+On 2026-10-25, class 7 `0x02` (sleep time) was added: 1, 3, 10, 40 minutes and "never" were written and read
+back, and the original 3 minutes restored.
 
 One side effect: the backlight speed field changed from 0 to 2. The firmware ignores a Raindrop write
 with speed 0, and Raindrop has no speed control in the UI, so it looks the same.

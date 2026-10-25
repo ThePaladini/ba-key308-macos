@@ -119,6 +119,8 @@ final class SafetyTests: XCTestCase {
         XCTAssertFalse(KeyboardClient.allowedSets.contains([0, 0x02])) // serial number
         XCTAssertFalse(KeyboardClient.allowedSets.contains([0, 0x03])) // device mode (DFU)
         XCTAssertFalse(KeyboardClient.allowedSets.contains([5, 0x05])) // profile reset
+        XCTAssertTrue(KeyboardClient.allowedSets.contains([7, 0x02]))  // sleep time
+        XCTAssertFalse(KeyboardClient.allowedSets.contains([7, 0x01])) // backlight dim time: not needed, stays blocked
     }
 }
 

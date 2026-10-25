@@ -1,8 +1,12 @@
 # Changelog
 
-## 1.2.0 — unreleased
+## 1.2.0 — 2026-10-25
 
 **New**
+- **Sleep time.** Choose how long the keyboard waits, idle, before it sleeps (lights off, wireless link
+  dropped): 1, 3, 5, 10, 20, 30 or 40 minutes, or never, in the menu or with `bakey sleep`. It is stored on
+  the keyboard. The factory value is 3 minutes. The Windows app has the same setting but shows it only on the
+  2.4G receiver. "Never" uses more battery.
 - **Raindrop inverted (Mac, on key press).** The opposite of the key-press Raindrop: the keyboard stays
   lit (white by default, or any color from the mixer), and the key you press goes dark with a ring of shadow
   spreading out. Made for white keycaps.

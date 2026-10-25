@@ -359,6 +359,9 @@ private struct FooterView: View {
             Toggle("Battery levels in menu bar", isOn: $store.showBatteryInMenuBar)
                 .help("Keyboard, plus any Bluetooth device pinned below (e.g. the mouse)")
             Toggle("Launch at login", isOn: Binding(get: { store.launchAtLogin }, set: { store.launchAtLogin = $0 }))
+            if let seconds = store.sleepSeconds, store.status == .connected {
+                SleepPicker(seconds: seconds) { store.setSleep(minutes: $0) }
+            }
             HStack {
                 Button("Refresh") { store.refresh() }
                     .disabled(store.status != .connected)
@@ -373,5 +376,28 @@ private struct FooterView: View {
         }
         .toggleStyle(.checkbox)
         .font(.callout)
+    }
+}
+
+/// Idle time before the keyboard sleeps, with the Windows app's choices. A value set elsewhere (e.g. with
+/// `bakey sleep 7`) is shown as an extra item so the picker never misreports it.
+private struct SleepPicker: View {
+    let seconds: Int
+    let onSelect: (Int) -> Void
+
+    private var choices: [Int] {
+        var c = KeyboardClient.sleepMinutesChoices
+        let current = seconds / 60
+        if !c.contains(current) { c.insert(current, at: c.firstIndex { $0 == 0 || $0 > current } ?? c.endIndex) }
+        return c
+    }
+
+    var body: some View {
+        Picker("Keyboard sleeps after", selection: Binding(get: { seconds / 60 }, set: onSelect)) {
+            ForEach(choices, id: \.self) { m in
+                Text(m == 0 ? "Never" : "\(m) min").tag(m)
+            }
+        }
+        .help("Idle time before the keyboard turns off its lights and, on Bluetooth or the 2.4G receiver, disconnects. Stored on the keyboard. \"Never\" drains the battery faster.")
     }
 }

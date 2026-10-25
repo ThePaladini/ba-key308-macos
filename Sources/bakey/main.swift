@@ -10,6 +10,7 @@ USAGE
   bakey effect <region> <id|name> [--color RRGGBB] [--speed 1-3] [--reverse]
                                       Set a hardware effect. region: back | side
   bakey brightness <region> <0-100>   Set brightness in percent
+  bakey sleep [minutes|never]         Show or set the idle time before the keyboard sleeps
   bakey fill <RRGGBB>                 Per-key mode, all keys one color
   bakey keys <label=RRGGBB>... [--base RRGGBB]
                                       Per-key mode, color individual keys (e.g. W=ff0000)
@@ -56,6 +57,10 @@ func region(_ s: String) -> UInt8 {
     }
 }
 
+func sleepText(_ seconds: Int) -> String {
+    seconds == 0 ? "Never sleeps" : "Sleeps after " + (seconds % 60 == 0 ? "\(seconds / 60) min" : "\(seconds) s") + " idle"
+}
+
 func number(_ s: String) -> UInt8? {
     s.lowercased().hasPrefix("0x") ? UInt8(s.dropFirst(2), radix: 16) : UInt8(s)
 }
@@ -100,7 +105,7 @@ func run() throws {
         print("Firmware \(i.firmware), hardware \(i.hardware)")
         print("Battery \(b.level)% \(b.status.map { "\($0)" } ?? "")")
         print("Profile \(profile) of \(try kb.profileIDs().count), Win lock \(locks.winLock ? "on" : "off"), Mac mode \(locks.macMode ? "on" : "off")")
-        print("Backlight idle-off after \(try kb.sleepSeconds()) s")
+        print(sleepText(try kb.sleepSeconds(profile: profile)))
         for r in LEDRegion.allCases {
             let e = try kb.effect(region: r.rawValue, profile: profile)
             let br = try kb.brightness(region: r.rawValue)
@@ -139,6 +144,18 @@ func run() throws {
         guard args.count == 2, let pct = Int(args[1]), (0...100).contains(pct) else { fail(usage) }
         let kb = connect()
         try kb.setBrightness(UInt8(pct * 255 / 100), region: region(args[0]), profile: try kb.activeProfile())
+
+    case "sleep":
+        let kb = connect()
+        let profile = try kb.activeProfile()
+        if let arg = args.first {
+            let minutes: Int
+            if ["never", "off", "0"].contains(arg.lowercased()) { minutes = 0 }
+            else if let m = Int(arg), (1...1092).contains(m) { minutes = m }
+            else { fail("Usage: bakey sleep [minutes|never]  (the Windows app offers 1, 3, 5, 10, 20, 30, 40 or never)") }
+            try kb.setSleepSeconds(minutes * 60, profile: profile)
+        }
+        print(sleepText(try kb.sleepSeconds(profile: profile)))
 
     case "fill", "keys":
         var colors: [Int: RGB] = [:]

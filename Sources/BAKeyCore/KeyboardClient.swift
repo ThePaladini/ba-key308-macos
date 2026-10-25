@@ -92,6 +92,7 @@ public final class KeyboardClient {
         [CommandClass.lighting.rawValue, 0x03], // LED brightness
         [CommandClass.lighting.rawValue, 0x04], // per-key frame
         [CommandClass.profile.rawValue, 0x03],  // active profile
+        [CommandClass.power.rawValue, 0x02],    // sleep time
     ]
 
     public init(hid: HIDDevice) throws {
@@ -197,10 +198,24 @@ public final class KeyboardClient {
         return BatteryState(status: .init(rawValue: r[7]), level: Int(r[8]))
     }
 
-    /// Backlight auto-off time in seconds (0 = disabled).
-    public func sleepSeconds() throws -> Int {
-        let r = try transact(.power, 0x82)
+    /// Idle time before the keyboard goes to sleep (backlight off, wireless link dropped), in seconds.
+    /// 0 = never. Stored per profile, like the Windows app's "Sleep time".
+    public func sleepSeconds(profile: UInt8 = 1) throws -> Int {
+        let r = try transact(.power, 0x82, profile: profile, length: 3)
         return r[7] == 0 ? 0 : Int(r.uint16(at: 8))
+    }
+
+    /// The values the Windows app offers, in minutes (0 = never).
+    public static let sleepMinutesChoices = [1, 3, 5, 10, 20, 30, 40, 0]
+
+    /// Sets the idle time before the keyboard sleeps; 0 = never. The Windows app sends
+    /// `[7]` enabled, `[8..9]` seconds (big-endian) for the current profile.
+    public func setSleepSeconds(_ seconds: Int, profile: UInt8 = 1) throws {
+        let s = UInt16(clamping: max(seconds, 0))
+        try transact(.power, 0x02, profile: profile, payload: [s == 0 ? 0 : 1, UInt8(s >> 8), UInt8(s & 0xFF)])
+        // The keyboard acknowledges, then ignores requests for a moment (it is probably saving the setting):
+        // a GET sent right after it never gets an answer. 0.5 s later it answers normally (tested 2026-10-25).
+        Thread.sleep(forTimeInterval: 0.6)
     }
 
     // MARK: - Profiles
