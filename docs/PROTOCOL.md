@@ -154,7 +154,9 @@ Verified on the real receiver (PID `0x0042`, 12 Mb/s USB):
   reports Off. Bluetooth isn't affected. A write identical to the stored state is ignored (Off again does
   nothing); a write that differs is applied (Off with speed 3 turned it off). Fix in the app: on every wake
   and connect through the receiver, send the side light twice, first with a different speed byte, then the
-  real state (2026-10-25, reproduced with a 1-min sleep time, verified by eye).
+  real state (2026-10-25, reproduced with a 1-min sleep time, verified by eye). **Timing matters:** the
+  keyboard relights the side light a moment *after* it reconnects, so a write sent 0.27 s after the wake was
+  overwritten; the app sends it 1.5 s and 5 s after the wake, which held over the following wakes.
 
 ---
 

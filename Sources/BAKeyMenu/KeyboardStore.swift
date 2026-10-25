@@ -200,20 +200,30 @@ final class KeyboardStore: ObservableObject {
     /// stored effect (and what it reports) is Off, and it ignores a write identical to the stored one
     /// (tested 2026-10-25; docs/PROTOCOL.md). Bluetooth isn't affected. Re-send the side light as two
     /// writes, the first with a different speed byte, so the second (the real state) is applied.
+    /// The keyboard relights the side light a moment *after* it reconnects, so a write sent right away can be
+    /// overwritten (seen 2026-10-25: re-applied 0.27 s after the wake, light still on). Send it 1.5 s and 5 s later.
     private func reapplyAfterWake() {
+        for delay in [1.5, 5.0] {
+            Task {
+                try? await Task.sleep(nanoseconds: UInt64(delay * 1e9))
+                guard status == .connected, keyboardAwake else { return }
+                await reapplySideLight()
+            }
+        }
+    }
+
+    private func reapplySideLight() async {
         guard let side = regions[.sidelight]?.state else { return }
         var nudge = side
         nudge.speed = side.speed == 3 ? 2 : 3
         let profile = self.profile
-        Task {
-            do {
-                try await worker.run { kb in
-                    try kb.setEffect(nudge, region: LEDRegion.sidelight.rawValue, profile: profile)
-                    try kb.setEffect(side, region: LEDRegion.sidelight.rawValue, profile: profile)
-                }
-                AppLog.write("side light re-applied (\(LightingEffect(id: side.effect).name))")
-            } catch { report(error) }
-        }
+        do {
+            try await worker.run { kb in
+                try kb.setEffect(nudge, region: LEDRegion.sidelight.rawValue, profile: profile)
+                try kb.setEffect(side, region: LEDRegion.sidelight.rawValue, profile: profile)
+            }
+            AppLog.write("side light re-applied (\(LightingEffect(id: side.effect).name))")
+        } catch { report(error) }
     }
 
     private func checkKeyboardAwake() async {
@@ -223,6 +233,7 @@ final class KeyboardStore: ObservableObject {
         keyboardAwake = awake
         AppLog.write(awake ? "keyboard woke (2.4G)" : "keyboard asleep (2.4G)")
         if awake {
+            if lastError?.hasPrefix("The keyboard is asleep") == true { lastError = nil }
             reapplyAfterWake()
             await refreshBattery()
         }
@@ -289,6 +300,10 @@ final class KeyboardStore: ObservableObject {
 
     /// Sleep time in minutes, 0 = never. Stored on the keyboard (per profile).
     func setSleep(minutes: Int) {
+        guard keyboardAwake else {
+            lastError = "The keyboard is asleep. Press a key, then choose again."
+            return
+        }
         let previous = sleepSeconds
         sleepSeconds = minutes * 60
         let profile = self.profile
