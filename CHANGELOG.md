@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.2.1 — unreleased
+## 1.2.1 — 2026-10-25
 
 **Fixed**
 - **High energy use with a key-press Mac effect.** Raindrop (Mac) and Raindrop inverted redrew the keyboard
